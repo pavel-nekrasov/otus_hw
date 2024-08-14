@@ -10,7 +10,7 @@ var ErrInvalidString = errors.New("invalid string")
 type ParseState struct {
 	builder strings.Builder
 	Cur     rune
-	Prev    rune
+	prev    rune
 	Escaped bool
 }
 
@@ -18,74 +18,70 @@ func Unpack(input string) (string, error) {
 	var state ParseState
 
 	for _, state.Cur = range input {
-		if state.Escaped {
-			if !state.isBackSlash() && !state.isDigit() {
-				return "", ErrInvalidString
-			}
-			state.Escaped = false
-			state.push()
-			continue
-		}
-
 		switch {
-		case state.isBackSlash():
-			state.output()
-			state.Escaped = true
-		case state.isEmpty() && state.isDigit():
+		case state.Escaped && !state.IsBackSlash() && !state.IsDigit():
 			return "", ErrInvalidString
-		case state.isEmpty():
-			state.push()
-		case state.isDigit():
-			state.outputN()
+		case state.Escaped:
+			state.Escaped = false
+			state.Push()
+		case state.IsBackSlash():
+			state.Output()
+			state.Escaped = true
+		case state.IsEmpty() && state.IsDigit():
+			return "", ErrInvalidString
+		case state.IsEmpty():
+			state.Push()
+		case state.IsDigit():
+			state.OutputN()
 		default:
-			state.output()
-			state.push()
+			state.Output()
+			state.Push()
 		}
 	}
 
-	state.output()
+	state.Output()
 
-	return state.string(), nil
+	return state.String(), nil
 }
 
-func (s *ParseState) isDigit() bool {
+func (s *ParseState) IsDigit() bool {
 	return s.Cur >= 48 && s.Cur <= 57
 }
 
-func (s *ParseState) isBackSlash() bool {
+func (s *ParseState) IsBackSlash() bool {
 	return s.Cur == 92
 }
 
-func (s *ParseState) toDigit() int {
+func (s *ParseState) Digit() int {
 	return int(s.Cur) - 48
 }
 
-func (s *ParseState) isEmpty() bool {
-	return s.Prev == 0
+func (s *ParseState) IsEmpty() bool {
+	return s.prev == 0
 }
 
-func (s *ParseState) push() {
-	s.Prev = s.Cur
+func (s *ParseState) Push() {
+	s.prev = s.Cur
 }
 
-func (s *ParseState) pop() rune {
-	r := s.Prev
-	s.Prev = 0
+func (s *ParseState) Pop() rune {
+	r := s.prev
+	s.prev = 0
 	return r
 }
 
-func (s *ParseState) output() {
-	if !s.isEmpty() {
-		s.builder.WriteString(string(s.pop()))
+func (s *ParseState) Output() {
+	if !s.IsEmpty() {
+		s.builder.WriteString(string(s.Pop()))
 	}
 }
 
-func (s *ParseState) outputN() {
-	if !s.isEmpty() {
-		s.builder.WriteString(strings.Repeat(string(s.pop()), s.toDigit()))
+func (s *ParseState) OutputN() {
+	if !s.IsEmpty() {
+		s.builder.WriteString(strings.Repeat(string(s.Pop()), s.Digit()))
 	}
 }
 
-func (s *ParseState) string() string {
+func (s *ParseState) String() string {
 	return s.builder.String()
 }
