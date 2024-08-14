@@ -8,13 +8,13 @@ import (
 var ErrInvalidString = errors.New("invalid string")
 
 type ParseState struct {
-	builder strings.Builder
 	Cur     rune
 	prev    rune
 	Escaped bool
 }
 
 func Unpack(input string) (string, error) {
+	var builder strings.Builder
 	var state ParseState
 
 	for _, state.Cur = range input {
@@ -25,16 +25,18 @@ func Unpack(input string) (string, error) {
 			state.Escaped = false
 			state.Push()
 		case state.IsBackSlash():
-			state.Output()
+			if !state.IsEmpty() {
+				builder.WriteString(string(state.Pop()))
+			}
 			state.Escaped = true
 		case state.IsEmpty() && state.IsDigit():
 			return "", ErrInvalidString
 		case state.IsEmpty():
 			state.Push()
 		case state.IsDigit():
-			state.OutputN()
+			builder.WriteString(strings.Repeat(string(state.Pop()), state.Digit()))
 		default:
-			state.Output()
+			builder.WriteString(string(state.Pop()))
 			state.Push()
 		}
 	}
@@ -43,9 +45,11 @@ func Unpack(input string) (string, error) {
 		return "", ErrInvalidString
 	}
 
-	state.Output()
+	if !state.IsEmpty() {
+		builder.WriteString(string(state.Pop()))
+	}
 
-	return state.String(), nil
+	return builder.String(), nil
 }
 
 func (s *ParseState) IsDigit() bool {
@@ -72,20 +76,4 @@ func (s *ParseState) Pop() rune {
 	r := s.prev
 	s.prev = 0
 	return r
-}
-
-func (s *ParseState) Output() {
-	if !s.IsEmpty() {
-		s.builder.WriteString(string(s.Pop()))
-	}
-}
-
-func (s *ParseState) OutputN() {
-	if !s.IsEmpty() && s.IsDigit() {
-		s.builder.WriteString(strings.Repeat(string(s.Pop()), s.Digit()))
-	}
-}
-
-func (s *ParseState) String() string {
-	return s.builder.String()
 }
