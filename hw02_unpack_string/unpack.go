@@ -7,7 +7,7 @@ import (
 
 var ErrInvalidString = errors.New("invalid string")
 
-type ParseState struct {
+type parseState struct {
 	Cur     rune
 	prev    rune
 	Escaped bool
@@ -15,29 +15,29 @@ type ParseState struct {
 
 func Unpack(input string) (string, error) {
 	var builder strings.Builder
-	var state ParseState
+	var state parseState
 
 	for _, state.Cur = range input {
 		switch {
-		case state.Escaped && !state.IsBackSlash() && !state.IsDigit():
+		case state.Escaped && !state.isBackSlash() && !state.isDigit():
 			return "", ErrInvalidString
 		case state.Escaped:
 			state.Escaped = false
-			state.Push()
-		case state.IsBackSlash():
-			if !state.IsEmpty() {
-				builder.WriteString(string(state.Pop()))
+			state.push()
+		case state.isBackSlash():
+			if state.any() {
+				builder.WriteString(string(state.pop()))
 			}
 			state.Escaped = true
-		case state.IsEmpty() && state.IsDigit():
+		case state.isEmpty() && state.isDigit():
 			return "", ErrInvalidString
-		case state.IsEmpty():
-			state.Push()
-		case state.IsDigit():
-			builder.WriteString(strings.Repeat(string(state.Pop()), state.Digit()))
+		case state.isEmpty():
+			state.push()
+		case state.isDigit():
+			builder.WriteString(strings.Repeat(string(state.pop()), state.digit()))
 		default:
-			builder.WriteString(string(state.Pop()))
-			state.Push()
+			builder.WriteString(string(state.pop()))
+			state.push()
 		}
 	}
 
@@ -45,34 +45,38 @@ func Unpack(input string) (string, error) {
 		return "", ErrInvalidString
 	}
 
-	if !state.IsEmpty() {
-		builder.WriteString(string(state.Pop()))
+	if state.any() {
+		builder.WriteString(string(state.pop()))
 	}
 
 	return builder.String(), nil
 }
 
-func (s *ParseState) IsDigit() bool {
+func (s *parseState) isDigit() bool {
 	return s.Cur >= 48 && s.Cur <= 57
 }
 
-func (s *ParseState) IsBackSlash() bool {
+func (s *parseState) isBackSlash() bool {
 	return s.Cur == 92
 }
 
-func (s *ParseState) Digit() int {
+func (s *parseState) digit() int {
 	return int(s.Cur) - 48
 }
 
-func (s *ParseState) IsEmpty() bool {
+func (s *parseState) isEmpty() bool {
 	return s.prev == 0
 }
 
-func (s *ParseState) Push() {
+func (s *parseState) any() bool {
+	return !s.isEmpty()
+}
+
+func (s *parseState) push() {
 	s.prev = s.Cur
 }
 
-func (s *ParseState) Pop() rune {
+func (s *parseState) pop() rune {
 	r := s.prev
 	s.prev = 0
 	return r
