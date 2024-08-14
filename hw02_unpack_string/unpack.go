@@ -77,7 +77,7 @@ func (s *ParseState) Output() {
 }
 
 func (s *ParseState) OutputN() {
-	if !s.IsEmpty() {
+	if !s.IsEmpty() && s.IsDigit() {
 		s.builder.WriteString(strings.Repeat(string(s.Pop()), s.Digit()))
 	}
 }
