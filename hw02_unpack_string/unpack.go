@@ -39,6 +39,10 @@ func Unpack(input string) (string, error) {
 		}
 	}
 
+	if state.Escaped {
+		return "", ErrInvalidString
+	}
+
 	state.Output()
 
 	return state.String(), nil
