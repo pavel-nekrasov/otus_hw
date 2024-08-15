@@ -53,15 +53,15 @@ func Unpack(input string) (string, error) {
 }
 
 func (s *parseState) isDigit() bool {
-	return s.Cur >= 48 && s.Cur <= 57
+	return s.Cur >= 48 && s.Cur <= 57 // проверка по ASCII коду цифр - ASCII(0) - 48, ASCII(1) - 29 .... ASCII(9) - 57
 }
 
 func (s *parseState) isBackSlash() bool {
-	return s.Cur == 92
+	return s.Cur == 92 // 92 - ASCII код '\'
 }
 
 func (s *parseState) digit() int {
-	return int(s.Cur) - 48
+	return int(s.Cur) - 48 // чтобы получить значение цифры - отмнимаем ASCII код 0 - 48
 }
 
 func (s *parseState) isEmpty() bool {
