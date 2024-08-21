@@ -14,7 +14,7 @@ type item struct {
 }
 
 type (
-	hashStatitic        map[string]int
+	hashStatistic       map[string]int
 	wordStatistic       []item
 	sortedWordStatistic []item
 )
@@ -24,7 +24,7 @@ func Top10(input string) []string {
 }
 
 func parse(input string) wordStatistic {
-	h := make(hashStatitic)
+	h := make(hashStatistic)
 
 	for _, s := range reg.FindAllString(input, -1) {
 		h[strings.ToLower(s)]++
@@ -32,7 +32,7 @@ func parse(input string) wordStatistic {
 	return h.toWordStatictic()
 }
 
-func (h hashStatitic) toWordStatictic() wordStatistic {
+func (h hashStatistic) toWordStatictic() wordStatistic {
 	s := make(wordStatistic, 0, len(h))
 	for k, v := range h {
 		s = append(s, item{Str: k, Count: v})
