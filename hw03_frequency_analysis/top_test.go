@@ -43,6 +43,17 @@ var text = `Как видите, он  спускается  по  лестни�
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
+var text2 = `--- ---  рыба ,рыба, рыба! бар бар. бар.бар рыба-рыба РЫба-рыБА  --- .---  - - ,РЫба-рыБА,
+	Раб !раб
+	Lorem ipsum dolor sit amet, consectetur adipiscing elit, 
+	sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+	Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
+	Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
+	Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.`
+
+var text3 = `--- ---  рыба ,рыба, рыба! бар бар. бар.бар рыба-рыба РЫба-рыБА  --- .---  - - ,РЫба-рыБА,
+	Раб !раб`
+
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
 		require.Len(t, Top10(""), 0)
@@ -78,5 +89,32 @@ func TestTop10(t *testing.T) {
 			}
 			require.Equal(t, expected, Top10(text))
 		}
+	})
+
+	t.Run("positive test for complex cases", func(t *testing.T) {
+		expected := []string{
+			"---",       // 4
+			"бар",       // 4
+			"in",        // 4
+			"ut",        // 4
+			"рыба",      // 3
+			"рыба-рыба", // 3
+			"dolor",     // 2
+			"dolore",    // 2
+			"раб",       // 2
+			"ad",        // 2
+		}
+		require.Equal(t, expected, Top10(text2))
+	})
+
+	t.Run("positive test for complex cases and less that 10 elements", func(t *testing.T) {
+		expected := []string{
+			"---",       // 4
+			"бар",       // 4
+			"рыба",      // 3
+			"рыба-рыба", // 3
+			"раб",       // 2
+		}
+		require.Equal(t, expected, Top10(text3))
 	})
 }

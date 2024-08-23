@@ -14,9 +14,8 @@ type item struct {
 }
 
 type (
-	hashStatistic       map[string]int
-	wordStatistic       []item
-	sortedWordStatistic []item
+	hashStatistic map[string]int
+	wordStatistic []item
 )
 
 func Top10(input string) []string {
@@ -40,16 +39,16 @@ func (h hashStatistic) toWordStatictic() wordStatistic {
 	return s
 }
 
-func (wordStat wordStatistic) sort() sortedWordStatistic {
+func (wordStat wordStatistic) sort() wordStatistic {
 	sort.Slice(wordStat, func(i, j int) bool {
 		return wordStat[i].Count > wordStat[j].Count ||
 			(wordStat[i].Count == wordStat[j].Count && wordStat[i].Str < wordStat[j].Str)
 	})
 
-	return sortedWordStatistic(wordStat)
+	return wordStat
 }
 
-func (wordStat sortedWordStatistic) top10() []string {
+func (wordStat wordStatistic) top10() []string {
 	results := make([]string, 0, 10)
 
 	for i := 0; i < 10 && i < len(wordStat); i++ {
