@@ -88,4 +88,20 @@ func TestList(t *testing.T) {
 		require.Nil(t, l.Front())
 		require.Nil(t, l.Back())
 	})
+
+	t.Run("single element front/back equality", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(10)
+		require.Equal(t, 1, l.Len())
+		require.Equal(t, l.Front(), l.Front())
+		l.PushFront(20)
+		l.PushFront(30)
+
+		l.Remove(l.Back())
+		l.Remove(l.Back())
+
+		require.Equal(t, 1, l.Len())
+		require.Equal(t, l.Front(), l.Front())
+	})
 }
