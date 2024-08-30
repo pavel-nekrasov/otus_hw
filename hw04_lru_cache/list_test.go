@@ -94,7 +94,7 @@ func TestList(t *testing.T) {
 
 		l.PushFront(10)
 		require.Equal(t, 1, l.Len())
-		require.Equal(t, l.Front(), l.Front())
+		require.Equal(t, l.Front(), l.Back())
 		l.PushFront(20)
 		l.PushFront(30)
 
@@ -102,6 +102,6 @@ func TestList(t *testing.T) {
 		l.Remove(l.Back())
 
 		require.Equal(t, 1, l.Len())
-		require.Equal(t, l.Front(), l.Front())
+		require.Equal(t, l.Front(), l.Back())
 	})
 }
