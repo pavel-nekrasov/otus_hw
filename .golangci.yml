@@ -8,6 +8,15 @@ linters-settings:
   funlen:
     lines: 150
     statements: 80
+  depguard:
+    rules:
+      prevent_unmaintained_packages:
+        list-mode: lax # allow unless explicitely denied
+        files:
+          - $all
+        allow:
+          - $gostd
+          - github.com/stretchr/testify/require
 
 issues:
   exclude-rules:
