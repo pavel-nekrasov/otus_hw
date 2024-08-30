@@ -48,4 +48,44 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 	})
+
+	t.Run("populate and empty from front", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(10)
+		l.PushFront(20)
+		l.PushFront(30)
+
+		require.Equal(t, 3, l.Len())
+		require.NotNil(t, l.Front())
+		require.NotNil(t, l.Back())
+
+		l.Remove(l.Front())
+		l.Remove(l.Front())
+		l.Remove(l.Front())
+
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+	})
+
+	t.Run("populate and empty from back", func(t *testing.T) {
+		l := NewList()
+
+		l.PushFront(10)
+		l.PushFront(20)
+		l.PushFront(30)
+
+		require.Equal(t, 3, l.Len())
+		require.NotNil(t, l.Front())
+		require.NotNil(t, l.Back())
+
+		l.Remove(l.Back())
+		l.Remove(l.Back())
+		l.Remove(l.Back())
+
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+	})
 }
