@@ -61,8 +61,8 @@ func (c *lruCache) Clear() {
 	defer c.mu.Unlock()
 
 	c.queue = NewList()
-	clear(c.items)
-	clear(c.itemsContra)
+	c.items = make(map[Key]*ListItem, c.capacity)
+	c.itemsContra = make(map[*ListItem]Key, c.capacity)
 }
 
 func (c *lruCache) storeItem(key Key, item *ListItem) {
