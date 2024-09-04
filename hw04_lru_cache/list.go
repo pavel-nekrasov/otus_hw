@@ -39,7 +39,7 @@ func (l list) Back() *ListItem {
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
-	i := &ListItem{Value: v, Next: l.front, Prev: nil}
+	i := &ListItem{Value: v, Next: l.front}
 
 	if l.front != nil {
 		l.front.wire(i)
