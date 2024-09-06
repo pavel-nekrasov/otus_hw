@@ -52,6 +52,7 @@ func (s *workerPool) Execute(tasks []Task) error {
 }
 
 func (s *workerPool) runProducer(tasks []Task) {
+	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
 		defer close(s.tasksCh)
@@ -68,7 +69,7 @@ func (s *workerPool) runProducer(tasks []Task) {
 }
 
 func (s *workerPool) runConsumers() {
-	s.wg.Add(s.workerCount + 1)
+	s.wg.Add(s.workerCount)
 	// создаем N воркеров
 	for i := 1; i <= s.workerCount; i++ {
 		go s.worker()
