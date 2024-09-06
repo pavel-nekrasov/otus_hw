@@ -11,14 +11,14 @@ type Task func() error
 
 type workerPool struct {
 	workerCount int
+	errLimit    int
+	errCount    int
 
 	tasksCh  chan Task
 	cancelCh chan struct{}
-	errsCh   chan error
 
-	success bool
-
-	wg sync.WaitGroup
+	wg  sync.WaitGroup
+	mut sync.Mutex
 }
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
@@ -33,10 +33,9 @@ func newPool(n, m int) *workerPool {
 	}
 	return &workerPool{
 		workerCount: n,
+		errLimit:    m,
 		cancelCh:    make(chan struct{}),
-		tasksCh:     make(chan Task, n),
-		errsCh:      make(chan error, m-1),
-		success:     true,
+		tasksCh:     make(chan Task),
 	}
 }
 
@@ -77,11 +76,10 @@ func (s *workerPool) runConsumers() {
 }
 
 func (s *workerPool) wait() bool {
-	defer close(s.errsCh)
 	// ждем завершения всех воркеров
 	s.wg.Wait()
 
-	return s.success
+	return s.errCount < s.errLimit
 }
 
 func (s *workerPool) worker() {
@@ -90,20 +88,23 @@ func (s *workerPool) worker() {
 	// читаем канал задач пока канал открыт
 	// когда у продюсера закончатся задачи - он закроет канал tasksCh и цикл завершится
 	for task := range s.tasksCh {
-		err := task()
-		if err != nil {
-			select {
-			case <-s.cancelCh:
-				return
-			// пишем в канал ошибок если лимит ошибок не превышен
-			case s.errsCh <- err:
-			// сюда попадаем если канал ошибок заполнен, т.е. в первый раз превышен лимит ошибок
-			default:
-				// отменяем выполнение
-				s.success = false
-				close(s.cancelCh)
-				return
-			}
+		if task() != nil {
+			s.notifyError()
 		}
+	}
+}
+
+func (s *workerPool) notifyError() {
+	s.mut.Lock()
+	defer s.mut.Unlock()
+
+	if s.errCount >= s.errLimit {
+		return
+	}
+
+	s.errCount++
+
+	if s.errCount >= s.errLimit {
+		close(s.cancelCh)
 	}
 }
