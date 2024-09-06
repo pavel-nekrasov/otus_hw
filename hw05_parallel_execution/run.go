@@ -54,7 +54,9 @@ func (s *workerPool) Execute(tasks []Task) error {
 
 func (s *workerPool) runProducer(tasks []Task) {
 	go func() {
+		defer s.wg.Done()
 		defer close(s.tasksCh)
+
 		// читаем задачи и если сигнала отмены нет - пишем в канал задач
 		for _, task := range tasks {
 			select {
@@ -67,7 +69,7 @@ func (s *workerPool) runProducer(tasks []Task) {
 }
 
 func (s *workerPool) runConsumers() {
-	s.wg.Add(s.workerCount)
+	s.wg.Add(s.workerCount + 1)
 	// создаем N воркеров
 	for i := 1; i <= s.workerCount; i++ {
 		go s.worker()
