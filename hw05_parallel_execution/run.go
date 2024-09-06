@@ -14,7 +14,7 @@ type workerPool struct {
 
 	tasksCh  chan Task
 	cancelCh chan struct{}
-	errsCh   chan struct{}
+	errsCh   chan error
 
 	success bool
 
@@ -35,7 +35,7 @@ func newPool(n, m int) *workerPool {
 		workerCount: n,
 		cancelCh:    make(chan struct{}),
 		tasksCh:     make(chan Task, n),
-		errsCh:      make(chan struct{}, m-1),
+		errsCh:      make(chan error, m-1),
 		success:     true,
 	}
 }
@@ -90,25 +90,19 @@ func (s *workerPool) worker() {
 	// читаем канал задач пока канал открыт
 	// когда у продюсера закончатся задачи - он закроет канал tasksCh и цикл завершится
 	for task := range s.tasksCh {
-		select {
-		// перед выполнением проверяем - не превышено ли число ошибок другими воркерами
-		case <-s.cancelCh:
-			return
-		default:
-			err := task()
-			if err != nil {
-				select {
-				case <-s.cancelCh:
-					return
-				// пишем в канал ошибок если лимит ошибок не превышен
-				case s.errsCh <- struct{}{}:
-				// сюда попадаем если канал ошибок заполнен, т.е. в первый раз превышен лимит ошибок
-				default:
-					// отменяем выполнение
-					s.success = false
-					close(s.cancelCh)
-					return
-				}
+		err := task()
+		if err != nil {
+			select {
+			case <-s.cancelCh:
+				return
+			// пишем в канал ошибок если лимит ошибок не превышен
+			case s.errsCh <- err:
+			// сюда попадаем если канал ошибок заполнен, т.е. в первый раз превышен лимит ошибок
+			default:
+				// отменяем выполнение
+				s.success = false
+				close(s.cancelCh)
+				return
 			}
 		}
 	}
