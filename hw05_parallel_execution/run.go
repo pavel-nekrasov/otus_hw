@@ -76,10 +76,9 @@ func (s *workerPool) runConsumers() {
 }
 
 func (s *workerPool) wait() bool {
+	defer close(s.errsCh)
 	// ждем завершения всех воркеров
 	s.wg.Wait()
-	// закрываем канал ошибок
-	close(s.errsCh)
 
 	return s.success
 }
