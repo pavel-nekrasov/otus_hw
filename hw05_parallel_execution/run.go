@@ -18,8 +18,7 @@ type workerPool struct {
 
 	success bool
 
-	wg  sync.WaitGroup
-	mut sync.Mutex
+	wg sync.WaitGroup
 }
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
@@ -99,26 +98,18 @@ func (s *workerPool) worker() {
 			err := task()
 			if err != nil {
 				select {
+				case <-s.cancelCh:
+					return
 				// пишем в канал ошибок если лимит ошибок не превышен
 				case s.errsCh <- struct{}{}:
 				// сюда попадаем если канал ошибок заполнен, т.е. в первый раз превышен лимит ошибок
 				default:
 					// отменяем выполнение
-					s.cancel()
+					s.success = false
+					close(s.cancelCh)
 					return
 				}
 			}
 		}
-	}
-}
-
-func (s *workerPool) cancel() {
-	s.mut.Lock()
-	defer s.mut.Unlock()
-
-	// проверка чтобы избежать паники при вторичном закрытии канала
-	if s.success {
-		s.success = false
-		close(s.cancelCh)
 	}
 }
