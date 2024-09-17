@@ -21,7 +21,7 @@ type outputAdapter struct {
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	pipeLine := newPipeline(in, done, stages)
-	return pipeLine.Run(in, done)
+	return pipeLine.Run()
 }
 
 func newPipeline(in In, done In, stages []Stage) *pipeline {
@@ -32,16 +32,16 @@ func newPipeline(in In, done In, stages []Stage) *pipeline {
 	}
 }
 
-func (p *pipeline) Run(in In, done In) Out {
-	ch := in
+func (p *pipeline) Run() Out {
+	ch := p.in
 	for _, stage := range p.stages {
-		ch = stage(p.multiplex(ch, done))
+		ch = stage(p.multiplex(ch))
 	}
 
 	return ch
 }
 
-func (p *pipeline) multiplex(in In, done In) Out {
+func (p *pipeline) multiplex(in In) Out {
 	s := outputAdapter{
 		out: make(Bi),
 	}
@@ -61,7 +61,7 @@ func (p *pipeline) multiplex(in In, done In) Out {
 					return
 				}
 				s.write(v)
-			case <-done:
+			case <-p.done:
 				s.close()
 				continue
 			}
