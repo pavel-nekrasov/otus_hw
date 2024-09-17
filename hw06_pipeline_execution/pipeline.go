@@ -35,13 +35,13 @@ func newPipeline(in In, done In, stages []Stage) *pipeline {
 func (p *pipeline) Run() Out {
 	ch := p.in
 	for _, stage := range p.stages {
-		ch = stage(p.multiplex(ch))
+		ch = stage(p.createInputChannel(ch))
 	}
 
 	return ch
 }
 
-func (p *pipeline) multiplex(in In) Out {
+func (p *pipeline) createInputChannel(in In) Out {
 	s := outputAdapter{
 		out: make(Bi),
 	}
