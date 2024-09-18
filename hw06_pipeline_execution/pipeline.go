@@ -8,78 +8,48 @@ type (
 
 type Stage func(in In) (out Out)
 
-type pipeline struct {
-	stages []Stage
-	in     In
-	done   In
-}
-
-type outputAdapter struct {
-	out    Bi
-	closed bool
-}
-
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	pipeLine := newPipeline(in, done, stages)
-	return pipeLine.Run()
-}
-
-func newPipeline(in In, done In, stages []Stage) *pipeline {
-	return &pipeline{
-		in:     in,
-		done:   done,
-		stages: stages,
+	ch := createInputChannel(in, done)
+	for index, stage := range stages {
+		var inputCh In
+		if index > 0 {
+			inputCh = createInputChannel(ch, done)
+		} else {
+			inputCh = ch
+		}
+		ch = stage(inputCh)
 	}
-}
-
-func (p *pipeline) Run() Out {
-	ch := p.in
-	for _, stage := range p.stages {
-		ch = stage(p.createInputChannel(ch))
-	}
-
 	return ch
 }
 
-func (p *pipeline) createInputChannel(in In) Out {
-	s := outputAdapter{
-		out: make(Bi),
-	}
+func createInputChannel(in In, done In) Out {
+	out := make(Bi)
 
 	// тут тонкость в том, что stage не проверяет внутри себя done поэтому после закрытия done,
 	// если сразу выйти из горутины
 	// горутина объявленная в предыдущем stage может зависнуть пытаясь писать в канал который никто не читает.
-	// Поэтому при закрытии done закрываем out, выставляем флаг, но из цикла не выходим до тех пор,
-	// пока предыдущий stage не закроет свой канал записи. Фактическив момент закрытия done
-	// мы продолжвем читать из in пока он не закроется и просто отбрасываем приходящие оттуда данные
+	// Поэтому при выходе через defer закрываем out,
+	// но продолжаем читать из in пока он не закроется и просто отбрасываем приходящие оттуда данные
 	go func() {
-		defer s.close()
+		defer func() {
+			close(out)
+			//revive:disable:empty-block
+			for range in {
+			}
+			//revive:enable:empty-block
+		}()
 		for {
 			select {
 			case v, ok := <-in:
 				if !ok {
 					return
 				}
-				s.write(v)
-			case <-p.done:
-				s.close()
-				continue
+				out <- v
+			case <-done:
+				return
 			}
 		}
 	}()
 
-	return s.out
-}
-
-func (s *outputAdapter) write(v interface{}) {
-	if !s.closed {
-		s.out <- v
-	}
-}
-
-func (s *outputAdapter) close() {
-	if !s.closed {
-		s.closed = true
-		close(s.out)
-	}
+	return out
 }
