@@ -11,13 +11,10 @@ type Stage func(in In) (out Out)
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	ch := createInputChannel(in, done)
 	for index, stage := range stages {
-		var inputCh In
 		if index > 0 {
-			inputCh = createInputChannel(ch, done)
-		} else {
-			inputCh = ch
+			ch = createInputChannel(ch, done)
 		}
-		ch = stage(inputCh)
+		ch = stage(ch)
 	}
 	return ch
 }
