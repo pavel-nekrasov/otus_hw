@@ -1,0 +1,1 @@
+echo -e "XXX is (${XXX}), YYY is (${YYY})"
