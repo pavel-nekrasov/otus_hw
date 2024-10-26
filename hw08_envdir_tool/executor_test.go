@@ -11,9 +11,7 @@ import (
 func TestRunCmd(t *testing.T) {
 	t.Run("Test echo", func(t *testing.T) {
 		tempOut, err := os.CreateTemp("", "out.*.txt")
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(t, err)
 
 		defer tempOut.Close()
 
