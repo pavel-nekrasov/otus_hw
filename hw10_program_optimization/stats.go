@@ -1,13 +1,17 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/mailru/easyjson"
 )
 
+//easyjson:json
 type User struct {
 	ID       int
 	Name     string
@@ -17,6 +21,8 @@ type User struct {
 	Password string
 	Address  string
 }
+
+var ErrNilReader = errors.New("nil reader")
 
 type DomainStat map[string]int
 
@@ -28,38 +34,55 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	return countDomains(u, domain)
 }
 
-type users [100_000]User
+type users []*User
 
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return
+func getUsers(r io.Reader) (users, error) {
+	if r == nil {
+		return nil, ErrNilReader
 	}
+	// читаем сканнером - не надо загружать сразу весь файл в память
+	// scanner читает переиспользуя внутренний буффер - экономим память
+	scanner := bufio.NewScanner(r)
+	// читаем в построчном режиме
+	scanner.Split(bufio.ScanLines)
+	result := make(users, 0)
 
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
+	for scanner.Scan() {
+		user := User{}
+		// scanner.Bytes() - не надо конвертировать строки в байты - сразу передаем байты (экономим на памяти)
+		// ну и читаем easyjson - он быстрее + экономит память(меньше аллокаций)
+		if err := easyjson.Unmarshal(scanner.Bytes(), &user); err != nil {
+			return nil, err
 		}
-		result[i] = user
+		// т.к. слайс указателей - данные копировать не надо - в слайс заносим только указатель
+		result = append(result, &user)
 	}
-	return
+	return result, nil
 }
 
 func countDomains(u users, domain string) (DomainStat, error) {
 	result := make(DomainStat)
+	// один раз компилируем regex
+	r, err := regexp.Compile("\\." + domain)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
-		}
+		matched := r.Match([]byte(user.Email))
 
 		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
+			// так вроде немного меньше памяти жрет. В SplitN  - аллоцируется две строки первая из которых нам заведомо не нужна
+			idx := strings.Index(user.Email, "@")
+			if idx < 0 {
+				continue
+			}
+			domainPart := strings.ToLower(user.Email[idx+1:])
+
+			// domainPart := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
+			num := result[domainPart]
 			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+			result[domainPart] = num
 		}
 	}
 	return result, nil
