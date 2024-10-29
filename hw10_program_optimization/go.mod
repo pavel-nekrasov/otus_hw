@@ -1,4 +1,4 @@
-module github.com/pavel_nekrasov/hw10_program_optimization
+module github.com/pavel_nekrasov/otus_hw/hw10_program_optimization
 
 go 1.22
 
