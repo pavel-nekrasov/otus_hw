@@ -23,20 +23,21 @@ type (
 		validationErrors ValidationErrors
 	}
 
-/*
-validationRuleInt func(v int, criteria string) error
+	basicTypes interface {
+		~int | ~string
+	}
 
-validationRuleString func(v string, criteria string) error
-*/
+	integerValidator func(f string, v int, criteria string) error
+	stringValidator  func(f string, v string, criteria string) error
 )
 
-var intRules = map[string]func(string, int, string) error{
+var intRules = map[string]integerValidator{
 	"in":  validateIntInclusion,
 	"max": validateIntMax,
 	"min": validateIntMin,
 }
 
-var strRules = map[string]func(string, string, string) error{
+var strRules = map[string]stringValidator{
 	"in":     validateStringInclusion,
 	"len":    validateStringLen,
 	"regexp": validateStringRegex,
@@ -98,15 +99,16 @@ func (sv *structValidator) ValidateStruct(value interface{}) error {
 			continue
 		}
 
+		//exhaustive:ignore
 		switch structField.Type.Kind() {
 		case reflect.Int, reflect.String:
 			sv.handleScalar(structField, tag, structValue.Field(i))
-		case reflect.Slice, reflect.Array:
+		case reflect.Slice:
 			sv.handleVector(structField, tag, structValue.Field(i))
 		case reflect.Struct:
 			sv.handleStruct(structField, tag, structValue.Field(i))
 		case reflect.Ptr:
-			sv.handleStructPtr(structField, tag, structValue.Field(i))
+			sv.handlePtr(structField, tag, structValue.Field(i))
 		default:
 		}
 		if sv.criticalError != nil {
@@ -130,6 +132,7 @@ func (sv *structValidator) fullFieldName(fieldName string) string {
 func (sv *structValidator) handleScalar(field reflect.StructField, tag string, value reflect.Value) {
 	fullFieldName := sv.fullFieldName(field.Name)
 
+	//exhaustive:ignore
 	switch field.Type.Kind() {
 	case reflect.Int:
 		sv.filterErr(validateTags(fullFieldName, tag, int(value.Int()), intRules))
@@ -141,6 +144,7 @@ func (sv *structValidator) handleScalar(field reflect.StructField, tag string, v
 func (sv *structValidator) handleVector(field reflect.StructField, tag string, value reflect.Value) {
 	fullFieldName := sv.fullFieldName(field.Name)
 
+	//exhaustive:ignore
 	switch field.Type.Elem().Kind() {
 	case reflect.Int:
 		for _, v := range value.Interface().([]int) {
@@ -168,7 +172,7 @@ func (sv *structValidator) handleStruct(field reflect.StructField, tag string, v
 	sv.filterErr(innerValidator.ValidateStruct(value.Interface()))
 }
 
-func (sv *structValidator) handleStructPtr(field reflect.StructField, tag string, value reflect.Value) {
+func (sv *structValidator) handlePtr(field reflect.StructField, tag string, value reflect.Value) {
 	if tag != "nested" {
 		return
 	}
@@ -192,11 +196,15 @@ func (sv *structValidator) filterErr(err error) {
 	sv.criticalError = err
 }
 
-func validateTags[T comparable](field string, tag string, value T, validators map[string]func(string, T, string) error) error {
+func validateTags[T basicTypes, H ~func(string, T, string) error](field string,
+	tag string,
+	val T,
+	validators map[string]H,
+) error {
 	validationErrors := make(ValidationErrors, 0)
 	rules := strings.Split(tag, "|")
 	for _, rule := range rules {
-		err := validateTag(field, rule, value, validators)
+		err := validateTag(field, rule, val, validators)
 		if err == nil {
 			continue
 		}
@@ -213,7 +221,11 @@ func validateTags[T comparable](field string, tag string, value T, validators ma
 	return nil
 }
 
-func validateTag[T comparable](field string, rule string, value T, validators map[string]func(string, T, string) error) error {
+func validateTag[T basicTypes, H ~func(string, T, string) error](field string,
+	rule string,
+	val T,
+	validators map[string]H,
+) error {
 	ruleParts := strings.Split(rule, ":")
 	if len(ruleParts) != 2 {
 		return fmt.Errorf("%v: wrong notation: bad format %v", field, rule)
@@ -222,7 +234,7 @@ func validateTag[T comparable](field string, rule string, value T, validators ma
 	if !ok {
 		return fmt.Errorf("%v: wrong notation: unknown rule \"%v\"", field, ruleParts[0])
 	}
-	return validator(field, value, ruleParts[1])
+	return validator(field, val, ruleParts[1])
 }
 
 func validateStringLen(field string, value string, criteria string) error {
@@ -324,7 +336,7 @@ func validateIntMin(field string, value int, criteria string) error {
 	return nil
 }
 
-func sliceContains[T comparable](s []T, e T) bool {
+func sliceContains[T basicTypes](s []T, e T) bool {
 	for _, v := range s {
 		if v == e {
 			return true

@@ -2,6 +2,7 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -71,6 +72,9 @@ type (
 	BadStruct4 struct {
 		Va1 int `validate:"in:100,200,xxx"`
 	}
+	BadStruct5 struct {
+		Va1 string `validate:"max:11"`
+	}
 )
 
 func TestValidate(t *testing.T) {
@@ -79,19 +83,29 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			in:          User{ID: "12345", Name: "somename", Age: 15, Email: "sssddd", Role: "stuff"},
-			expectedErr: fmt.Errorf("ID: wrong len 5, expected 36\nAge: wrong value 15, should greater or equal to 18\nEmail: wrong value \"sssddd\""),
+			in: User{ID: "12345", Name: "somename", Age: 15, Email: "sssddd", Role: "stuff"},
+			expectedErr: fmt.Errorf("ID: wrong len 5, expected 36\n" +
+				"Age: wrong value 15, should greater or equal to 18\n" +
+				"Email: wrong value \"sssddd\""),
 		},
 		{
-			in:          User{ID: "12345", Name: "somename", Age: 125, Email: "user@example.com", Role: "admin"},
-			expectedErr: fmt.Errorf("ID: wrong len 5, expected 36\nAge: wrong value 125, should less or equal to 50"),
+			in: User{ID: "12345", Name: "somename", Age: 125, Email: "user@example.com", Role: "admin"},
+			expectedErr: fmt.Errorf("ID: wrong len 5, expected 36\n" +
+				"Age: wrong value 125, should less or equal to 50"),
 		},
 		{
-			in:          User{ID: "12345", Name: "somename", Age: 45, Email: "user@example.com", Role: "unknown"},
-			expectedErr: fmt.Errorf("ID: wrong len 5, expected 36\nRole: wrong value \"unknown\", should be one of [admin stuff]"),
+			in: User{ID: "12345", Name: "somename", Age: 45, Email: "user@example.com", Role: "unknown"},
+			expectedErr: fmt.Errorf("ID: wrong len 5, expected 36\n" +
+				"Role: wrong value \"unknown\", should be one of [admin stuff]"),
 		},
 		{
-			in:          User{ID: "012345678901234567890123456789012345", Name: "somename", Age: 45, Email: "user@example.com", Role: "stuff"},
+			in: User{
+				ID:    "012345678901234567890123456789012345",
+				Name:  "somename",
+				Age:   45,
+				Email: "user@example.com",
+				Role:  "stuff",
+			},
 			expectedErr: nil,
 		},
 		{
@@ -127,6 +141,9 @@ func TestValidate(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expectedErr.Error())
+				var validationErrors ValidationErrors
+				result := errors.As(err, &validationErrors)
+				require.True(t, result)
 			}
 		})
 	}
@@ -146,12 +163,16 @@ func TestNestedWithPointersValidate(t *testing.T) {
 			expectedErr: fmt.Errorf("OuterVal1: wrong len 3, expected 5\nOuterVal2: wrong len 7, expected 5"),
 		},
 		{
-			in:          OuterStruct2{OuterVal1: "xxx", OuterVal2: "yyyyyyy", Inner: InnerStruct{InnerVal1: "zzzz"}},
-			expectedErr: fmt.Errorf("OuterVal1: wrong len 3, expected 5\nInner.InnerVal1: wrong len 4, expected 7\nOuterVal2: wrong len 7, expected 5"),
+			in: OuterStruct2{OuterVal1: "xxx", OuterVal2: "yyyyyyy", Inner: InnerStruct{InnerVal1: "zzzz"}},
+			expectedErr: fmt.Errorf("OuterVal1: wrong len 3, expected 5\n" +
+				"Inner.InnerVal1: wrong len 4, expected 7\n" +
+				"OuterVal2: wrong len 7, expected 5"),
 		},
 		{
-			in:          OuterStruct3{OuterVal1: "xxx", OuterVal2: "yyyyyyy", Inner: &InnerStruct{InnerVal1: "zzzz"}},
-			expectedErr: fmt.Errorf("OuterVal1: wrong len 3, expected 5\nInner.InnerVal1: wrong len 4, expected 7\nOuterVal2: wrong len 7, expected 5"),
+			in: OuterStruct3{OuterVal1: "xxx", OuterVal2: "yyyyyyy", Inner: &InnerStruct{InnerVal1: "zzzz"}},
+			expectedErr: fmt.Errorf("OuterVal1: wrong len 3, expected 5\n" +
+				"Inner.InnerVal1: wrong len 4, expected 7\n" +
+				"OuterVal2: wrong len 7, expected 5"),
 		},
 		{
 			in:          OuterStruct3{OuterVal1: "xxxxx", OuterVal2: "yyyyy", Inner: &InnerStruct{InnerVal1: "zzzzzzz"}},
@@ -170,6 +191,9 @@ func TestNestedWithPointersValidate(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expectedErr.Error())
+				var validationErrors ValidationErrors
+				result := errors.As(err, &validationErrors)
+				require.True(t, result)
 			}
 		})
 	}
@@ -196,6 +220,10 @@ func TestBadNotationSyntax(t *testing.T) {
 			in:          BadStruct4{Va1: 100},
 			expectedErr: fmt.Errorf("Va1: wrong notation: \"xxx\" is not an integer"),
 		},
+		{
+			in:          BadStruct5{Va1: "value"},
+			expectedErr: fmt.Errorf("Va1: wrong notation: unknown rule \"max\""),
+		},
 	}
 
 	for i, tt := range tests {
@@ -209,6 +237,9 @@ func TestBadNotationSyntax(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expectedErr.Error())
+				var validationErrors ValidationErrors
+				result := errors.As(err, &validationErrors)
+				require.False(t, result)
 			}
 		})
 	}
