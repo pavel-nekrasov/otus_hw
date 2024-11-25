@@ -1,0 +1,3 @@
+[logger]
+level = "DEBUG"
+output = "/var/logs/calendar.log"

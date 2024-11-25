@@ -1,5 +1,7 @@
 [logger]
 level = "INFO"
+output = "stdout"
 
-# TODO
-# ...
+[http]
+host = ""
+port = 8080
