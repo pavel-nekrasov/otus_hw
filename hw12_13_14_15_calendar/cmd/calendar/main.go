@@ -15,6 +15,11 @@ import (
 	memorystorage "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
+type StorageController interface {
+	Connect(ctx context.Context) error
+	Close(ctx context.Context) error
+}
+
 var configFile string
 
 func init() {

@@ -58,5 +58,3 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) Stop(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
-
-// TODO

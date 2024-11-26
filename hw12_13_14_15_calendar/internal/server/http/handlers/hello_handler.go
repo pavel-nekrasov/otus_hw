@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -42,7 +41,7 @@ func (s *HelloService) GetHello(w http.ResponseWriter, r *http.Request) {
 func (s *HelloService) WriteResponse(w http.ResponseWriter, resp *Response) {
 	resBuf, err := json.Marshal(resp)
 	if err != nil {
-		log.Printf("response marshal error: %s", err)
+		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
 	}
 	_, err = w.Write(resBuf)
 	if err != nil {
