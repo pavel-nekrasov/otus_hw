@@ -42,13 +42,19 @@ var (
 	errPeriodIsBusy    = errors.New("another meeting exists for that period")
 )
 
-func (a *App) CreateEvent(ctx context.Context, title, start, end, description, owner, notify string) error {
+func (a *App) CreateEvent(ctx context.Context,
+	title, start, end, description, owner, notify string,
+) (storage.Event, error) {
 	event, err := a.validateAttributes(ctx, "", title, start, end, description, owner, notify)
 	if err != nil {
-		return err
+		return storage.Event{}, err
 	}
 	event.ID = uuid.NewString()
-	return a.storage.AddEvent(ctx, *event)
+	err = a.storage.AddEvent(ctx, *event)
+	if err != nil {
+		return storage.Event{}, err
+	}
+	return *event, nil
 }
 
 func (a *App) UpdateEvent(ctx context.Context, id, title, start, end, description, owner, notify string) error {
@@ -123,12 +129,12 @@ func (a *App) validateAttributes(
 	}
 
 	return &storage.Event{
-		ID:          id,
-		Title:       title,
-		StartTime:   startTime,
-		EndTime:     endTime,
-		Description: description,
-		OwnerEmail:  ownerEmail,
-		NotifyTime:  notify,
+		ID:           id,
+		Title:        title,
+		StartTime:    startTime,
+		EndTime:      endTime,
+		Description:  description,
+		OwnerEmail:   ownerEmail,
+		NotifyBefore: notify,
 	}, nil
 }

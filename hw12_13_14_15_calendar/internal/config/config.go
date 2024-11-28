@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	Logger LoggerConf
-	HTTP   HTTPConf
+	Logger  LoggerConf
+	HTTP    HTTPConf
+	Storage StorageConf
 }
 
 type LoggerConf struct {
@@ -19,6 +20,15 @@ type LoggerConf struct {
 type HTTPConf struct {
 	Host string
 	Port int
+}
+
+type StorageConf struct {
+	Mode     string
+	Host     string
+	Port     int
+	DBName   string
+	User     string
+	Password string
 }
 
 func New(filePath string) (c Config) {

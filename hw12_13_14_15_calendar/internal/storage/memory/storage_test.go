@@ -19,42 +19,42 @@ func TestStorageAddSuccess(t *testing.T) {
 	}{
 		{
 			add: storage.Event{
-				ID:         uuid.NewString(),
-				Title:      "meeting 1",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "",
+				ID:           uuid.NewString(),
+				Title:        "meeting 1",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 		},
 		{
 			add: storage.Event{
-				ID:         uuid.NewString(),
-				Title:      "meeting 2",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "2024-01-01T12:00:00Z00:00",
+				ID:           uuid.NewString(),
+				Title:        "meeting 2",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "2024-01-01T12:00:00Z00:00",
 			},
 		},
 		{
 			add: storage.Event{
-				ID:         uuid.NewString(),
-				Title:      "meeting 3",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "2024-01-01T11:00:00Z00:00",
+				ID:           uuid.NewString(),
+				Title:        "meeting 3",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "2024-01-01T11:00:00Z00:00",
 			},
 		},
 		{
 			add: storage.Event{
-				ID:         uuid.NewString(),
-				Title:      "meeting 4",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "2024-01-01T12:00:00Z00:00",
+				ID:           uuid.NewString(),
+				Title:        "meeting 4",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "2024-01-01T12:00:00Z00:00",
 			},
 		},
 	}
@@ -75,7 +75,7 @@ func TestStorageAddSuccess(t *testing.T) {
 			require.Equal(t, tt.add.EndTime, ev.EndTime)
 			require.Equal(t, tt.add.Description, ev.Description)
 			require.Equal(t, tt.add.OwnerEmail, ev.OwnerEmail)
-			require.Equal(t, tt.add.NotifyTime, ev.NotifyTime)
+			require.Equal(t, tt.add.NotifyBefore, ev.NotifyBefore)
 		})
 	}
 }
@@ -83,20 +83,20 @@ func TestStorageAddSuccess(t *testing.T) {
 func TestStorageGetSuccess(t *testing.T) {
 	prerequisites := []storage.Event{
 		{
-			ID:         "xxx",
-			Title:      "meeting 1",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "",
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			ID:         "xxx2",
-			Title:      "meeting 2",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
 	tests := []struct {
@@ -106,23 +106,23 @@ func TestStorageGetSuccess(t *testing.T) {
 		{
 			id: "xxx",
 			expected: storage.Event{
-				ID:         "xxx",
-				Title:      "meeting 1",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "",
+				ID:           "xxx",
+				Title:        "meeting 1",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 		},
 		{
 			id: "xxx2",
 			expected: storage.Event{
-				ID:         "xxx2",
-				Title:      "meeting 2",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "2024-01-01T12:00:00Z00:00",
+				ID:           "xxx2",
+				Title:        "meeting 2",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "2024-01-01T12:00:00Z00:00",
 			},
 		},
 	}
@@ -145,7 +145,7 @@ func TestStorageGetSuccess(t *testing.T) {
 			require.Equal(t, tt.expected.EndTime, ev.EndTime)
 			require.Equal(t, tt.expected.Description, ev.Description)
 			require.Equal(t, tt.expected.OwnerEmail, ev.OwnerEmail)
-			require.Equal(t, tt.expected.NotifyTime, ev.NotifyTime)
+			require.Equal(t, tt.expected.NotifyBefore, ev.NotifyBefore)
 		})
 	}
 }
@@ -153,20 +153,20 @@ func TestStorageGetSuccess(t *testing.T) {
 func TestStorageGetError(t *testing.T) {
 	prerequisites := []storage.Event{
 		{
-			ID:         "xxx",
-			Title:      "meeting 1",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "",
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			ID:         "xxx2",
-			Title:      "meeting 2",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
 	tests := []struct {
@@ -204,20 +204,20 @@ func TestStorageGetError(t *testing.T) {
 func TestStorageDeleteSuccess(t *testing.T) {
 	prerequisites := []storage.Event{
 		{
-			ID:         "xxx",
-			Title:      "meeting 1",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "",
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			ID:         "xxx2",
-			Title:      "meeting 2",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
 	tests := []struct {
@@ -255,20 +255,20 @@ func TestStorageDeleteSuccess(t *testing.T) {
 func TestStorageDeleteError(t *testing.T) {
 	prerequisites := []storage.Event{
 		{
-			ID:         "xxx",
-			Title:      "meeting 1",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "",
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			ID:         "xxx2",
-			Title:      "meeting 2",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
 	tests := []struct {
@@ -306,20 +306,20 @@ func TestStorageDeleteError(t *testing.T) {
 func TestStorageUpdateSuccess(t *testing.T) {
 	prerequisites := []storage.Event{
 		{
-			ID:         "xxx",
-			Title:      "meeting 1",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "",
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			ID:         "xxx2",
-			Title:      "meeting 2",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
 	tests := []struct {
@@ -327,22 +327,22 @@ func TestStorageUpdateSuccess(t *testing.T) {
 	}{
 		{
 			update: storage.Event{
-				ID:         "xxx",
-				Title:      "meeting 1",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "",
+				ID:           "xxx",
+				Title:        "meeting 1",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 		},
 		{
 			update: storage.Event{
-				ID:         "xxx2",
-				Title:      "meeting 2",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "2024-01-01T12:00:00Z00:00",
+				ID:           "xxx2",
+				Title:        "meeting 2",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "2024-01-01T12:00:00Z00:00",
 			},
 		},
 	}
@@ -368,7 +368,7 @@ func TestStorageUpdateSuccess(t *testing.T) {
 			require.Equal(t, tt.update.EndTime, ev.EndTime)
 			require.Equal(t, tt.update.Description, ev.Description)
 			require.Equal(t, tt.update.OwnerEmail, ev.OwnerEmail)
-			require.Equal(t, tt.update.NotifyTime, ev.NotifyTime)
+			require.Equal(t, tt.update.NotifyBefore, ev.NotifyBefore)
 		})
 	}
 }
@@ -376,20 +376,20 @@ func TestStorageUpdateSuccess(t *testing.T) {
 func TestStorageUpdateError(t *testing.T) {
 	prerequisites := []storage.Event{
 		{
-			ID:         "xxx",
-			Title:      "meeting 1",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "",
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			ID:         "xxx2",
-			Title:      "meeting 2",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
 	tests := []struct {
@@ -397,22 +397,22 @@ func TestStorageUpdateError(t *testing.T) {
 	}{
 		{
 			update: storage.Event{
-				ID:         "xxx1",
-				Title:      "meeting 1",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "",
+				ID:           "xxx1",
+				Title:        "meeting 1",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 		},
 		{
 			update: storage.Event{
-				ID:         "xxx3",
-				Title:      "meeting 2",
-				StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-				EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-				OwnerEmail: "user@example.com",
-				NotifyTime: "2024-01-01T12:00:00Z00:00",
+				ID:           "xxx3",
+				Title:        "meeting 2",
+				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "2024-01-01T12:00:00Z00:00",
 			},
 		},
 	}
@@ -438,36 +438,36 @@ func TestStorageUpdateError(t *testing.T) {
 func TestListEventsForRang(t *testing.T) {
 	prerequisites := []storage.Event{
 		{
-			ID:         "xxx1.1",
-			Title:      "meeting 1",
-			StartTime:  time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user1@example.com",
-			NotifyTime: "",
+			ID:           "xxx1.1",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user1@example.com",
+			NotifyBefore: "",
 		},
 		{
-			ID:         "xxx1.2",
-			Title:      "meeting 2",
-			StartTime:  time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 1, 14, 30, 0, 0, time.UTC),
-			OwnerEmail: "user1@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx1.2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 14, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user1@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 		{
-			ID:         "xxx1.3",
-			Title:      "meeting 3",
-			StartTime:  time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 2, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user1@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx1.3",
+			Title:        "meeting 3",
+			StartTime:    time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 2, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user1@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 		{
-			ID:         "xxx3",
-			Title:      "meeting 4",
-			StartTime:  time.Date(2024, 1, 3, 12, 0, 0, 0, time.UTC),
-			EndTime:    time.Date(2024, 1, 3, 12, 30, 0, 0, time.UTC),
-			OwnerEmail: "user2@example.com",
-			NotifyTime: "2024-01-01T12:00:00Z00:00",
+			ID:           "xxx3",
+			Title:        "meeting 4",
+			StartTime:    time.Date(2024, 1, 3, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 3, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user2@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
 	tests := []struct {

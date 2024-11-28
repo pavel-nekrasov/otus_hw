@@ -5,3 +5,11 @@ output = "stdout"
 [http]
 host = ""
 port = 8080
+
+[storage]
+mode = "memory"  # memory, postgre
+# host = "localhost"
+# port = 5432
+# dbname = "calendar_db"
+# user = "otus"
+# password = "password"

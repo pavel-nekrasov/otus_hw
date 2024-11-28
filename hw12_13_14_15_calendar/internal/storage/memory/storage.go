@@ -29,6 +29,10 @@ func (s *Storage) Close(_ context.Context) error {
 	return nil
 }
 
+func (s *Storage) Migrate(_ context.Context, _ string) (err error) {
+	return nil
+}
+
 func (s *Storage) AddEvent(_ context.Context, event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
