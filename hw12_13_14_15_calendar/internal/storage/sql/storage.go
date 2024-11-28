@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/jackc/pgx/v4/stdlib" //nolint:blank-imports
+	_ "github.com/jackc/pgx/v4/stdlib" // need import pgx
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/pressly/goose/v3"
