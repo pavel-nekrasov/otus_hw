@@ -10,7 +10,6 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib" // need import pgx
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
-	goose "github.com/pressly/goose/v3"
 )
 
 type Storage struct {
@@ -41,13 +40,13 @@ func (s *Storage) Close(_ context.Context) error {
 func (s *Storage) Migrate(_ context.Context, migrate string) (err error) {
 	//	goose.SetBaseFS(embedMigrations)
 
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("cannot set dialect: %w", err)
-	}
+	// if err := goose.SetDialect("postgres"); err != nil {
+	// 	return fmt.Errorf("cannot set dialect: %w", err)
+	// }
 
-	if err := goose.Up(s.db, migrate); err != nil {
-		return fmt.Errorf("cannot do up migration: %w", err)
-	}
+	// if err := goose.Up(s.db, migrate); err != nil {
+	// 	return fmt.Errorf("cannot do up migration: %w", err)
+	// }
 
 	return nil
 }
