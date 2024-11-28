@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
+	uuid "github.com/satori/go.uuid"
 )
 
 type App struct {
@@ -49,7 +49,7 @@ func (a *App) CreateEvent(ctx context.Context,
 	if err != nil {
 		return storage.Event{}, err
 	}
-	event.ID = uuid.NewString()
+	event.ID = uuid.NewV4().String()
 	err = a.storage.AddEvent(ctx, *event)
 	if err != nil {
 		return storage.Event{}, err

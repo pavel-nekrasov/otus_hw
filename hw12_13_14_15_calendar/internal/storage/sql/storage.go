@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/jackc/pgx/v4/stdlib" // need import pgx
+	_ "github.com/jackc/pgx/stdlib" // need import pgx
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 	goose "github.com/pressly/goose/v3"

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
@@ -19,7 +18,7 @@ func TestStorageAddSuccess(t *testing.T) {
 	}{
 		{
 			add: storage.Event{
-				ID:           uuid.NewString(),
+				ID:           "id1",
 				Title:        "meeting 1",
 				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
@@ -29,7 +28,7 @@ func TestStorageAddSuccess(t *testing.T) {
 		},
 		{
 			add: storage.Event{
-				ID:           uuid.NewString(),
+				ID:           "id2",
 				Title:        "meeting 2",
 				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
@@ -39,7 +38,7 @@ func TestStorageAddSuccess(t *testing.T) {
 		},
 		{
 			add: storage.Event{
-				ID:           uuid.NewString(),
+				ID:           "id3",
 				Title:        "meeting 3",
 				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
@@ -49,7 +48,7 @@ func TestStorageAddSuccess(t *testing.T) {
 		},
 		{
 			add: storage.Event{
-				ID:           uuid.NewString(),
+				ID:           "id4",
 				Title:        "meeting 4",
 				StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 				EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
