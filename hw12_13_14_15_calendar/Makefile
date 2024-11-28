@@ -29,7 +29,7 @@ install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.57.2
 
 lint: install-lint-deps
-	golangci-lint run ./...
+	golangci-lint run /home/runner/work/otus_hw/otus_hw/...
 
 migrate: build
 	$(BIN) --config ./configs/config.toml --migrateonly true
