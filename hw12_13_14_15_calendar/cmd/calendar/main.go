@@ -43,6 +43,19 @@ func main() {
 		logg.Error("failed to connect to storage: " + err.Error())
 		os.Exit(1) //nolint:gocritic
 	}
+	defer storage.Close(ctx)
+
+	if migrateonly == "true" {
+		logg.Info("Appying migrations...")
+		err := storage.Migrate(ctx, "migrations")
+		if err != nil {
+			logg.Error(fmt.Sprintf("Failed to apply migrations: %v", err))
+			os.Exit(1)
+		}
+		logg.Info("Done")
+		return
+	}
+
 	// ev, err := storage.GetEvent(ctx, "event-1")
 	// if err != nil {
 	// 	logg.Error(fmt.Sprintf("Failed to get event:%v", err))
@@ -56,19 +69,6 @@ func main() {
 	// 		"Notify", ev.NotifyBefore,
 	// 		"Owner", ev.OwnerEmail)
 	// }
-
-	defer storage.Close(ctx)
-
-	if migrateonly == "true" {
-		logg.Info("Appying migrations...")
-		err := storage.Migrate(ctx, "migrations")
-		if err != nil {
-			logg.Error(fmt.Sprintf("Failed to apply migrations: %v", err))
-			os.Exit(1)
-		}
-		logg.Info("Done")
-		return
-	}
 
 	calendar := app.New(logg, storage)
 

@@ -8,7 +8,7 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	$(BIN) --config ./configs/config.toml
+	$(BIN) -config ./configs/config.toml
 
 build-img:
 	docker build \
@@ -32,6 +32,6 @@ lint: install-lint-deps
 	golangci-lint run ./...
 
 migrate: build
-	$(BIN) --config ./configs/config.toml --migrateonly true
+	$(BIN) -config ./configs/config.toml -migrateonly true
 
 .PHONY: build run build-img run-img version test lint

@@ -7,7 +7,8 @@ host = ""
 port = 8080
 
 [storage]
-mode = "memory"  # memory, postgre
+mode = "memory"
+# mode = "postgre"  # memory, postgre
 # host = "localhost"
 # port = 5432
 # dbname = "calendar_db"
