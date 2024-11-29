@@ -6,6 +6,11 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+const (
+	StorageModePostgres = "postgres"
+	StorageModeMemory   = "memory"
+)
+
 type Config struct {
 	Logger  LoggerConf
 	HTTP    HTTPConf
@@ -36,5 +41,5 @@ func New(filePath string) (c Config) {
 	if err != nil {
 		log.Fatalf("Failed to load config file: %v", err)
 	}
-	return
+	return c
 }

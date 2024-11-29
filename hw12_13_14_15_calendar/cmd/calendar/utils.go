@@ -27,9 +27,9 @@ type (
 	}
 )
 
-func NewStorage(config config.StorageConf) StorageCtrl {
-	if config.Mode == "postgre" {
-		return sqlstorage.New(config.Host, config.Port, config.DBName, config.User, config.Password)
+func NewStorage(c config.StorageConf) StorageCtrl {
+	if c.Mode == config.StorageModePostgres {
+		return sqlstorage.New(c.Host, c.Port, c.DBName, c.User, c.Password)
 	}
 
 	return memorystorage.New()

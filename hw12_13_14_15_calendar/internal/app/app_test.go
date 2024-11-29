@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
@@ -14,47 +15,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type (
-	NewEventDto struct {
-		id          string
-		title       string
-		start       string
-		end         string
-		description string
-		owner       string
-		notify      string
-	}
-)
-
 func TestAppCreateEventSuccess(t *testing.T) {
-	tests := []NewEventDto{
+	tests := []contracts.Event{
 		{
-			title:  "meeting 1",
-			start:  "2024-11-25T10:00:00.000Z",
-			end:    "2024-11-25T10:30:00.000Z",
-			owner:  "user@example.com",
-			notify: "",
+			Title:        "meeting 1",
+			StartTime:    "2024-11-25T10:00:00.000Z",
+			EndTime:      "2024-11-25T10:30:00.000Z",
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			title:  "meeting 2",
-			start:  "2024-11-25T12:00:00.000Z",
-			end:    "2024-11-25T12:30:00.000Z",
-			owner:  "user@example.com",
-			notify: "",
+			Title:        "meeting 2",
+			StartTime:    "2024-11-25T12:00:00.000Z",
+			EndTime:      "2024-11-25T12:30:00.000Z",
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			title:  "meeting 3",
-			start:  "2024-11-25T10:00:00.000Z",
-			end:    "2024-11-25T10:30:00.000Z",
-			owner:  "user2@example.com",
-			notify: "",
+			Title:        "meeting 3",
+			StartTime:    "2024-11-25T10:00:00.000Z",
+			EndTime:      "2024-11-25T10:30:00.000Z",
+			OwnerEmail:   "user2@example.com",
+			NotifyBefore: "",
 		},
 		{
-			title:  "meeting 4",
-			start:  "2024-11-25T12:00:00.000Z",
-			end:    "2024-11-25T12:30:00.000Z",
-			owner:  "user2@example.com",
-			notify: "",
+			Title:        "meeting 4",
+			StartTime:    "2024-11-25T12:00:00.000Z",
+			EndTime:      "2024-11-25T12:30:00.000Z",
+			OwnerEmail:   "user2@example.com",
+			NotifyBefore: "",
 		},
 	}
 
@@ -67,7 +56,7 @@ func TestAppCreateEventSuccess(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			ev, err := app.CreateEvent(ctx, tt.title, tt.start, tt.end, tt.description, tt.owner, tt.notify)
+			ev, err := app.CreateEvent(ctx, tt)
 			require.NoError(t, err)
 			require.NotEmpty(t, ev.ID)
 		})
@@ -76,56 +65,56 @@ func TestAppCreateEventSuccess(t *testing.T) {
 
 func TestAppCreateEventSimpleValidations(t *testing.T) {
 	tests := []struct {
-		add NewEventDto
+		add contracts.Event
 		err error
 	}{
 		{
-			add: NewEventDto{
-				title:  "meeting 1",
-				start:  "2024-11-25T10:00:00.000Z",
-				end:    "2024-11-25T10:30:00",
-				owner:  "user@example.com",
-				notify: "",
+			add: contracts.Event{
+				Title:        "meeting 1",
+				StartTime:    "2024-11-25T10:00:00.000Z",
+				EndTime:      "2024-11-25T10:30:00",
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 			err: customerrors.ValidationError{Field: "EndTime", Err: errors.New("wrong date/time format")},
 		},
 		{
-			add: NewEventDto{
-				title:  "meeting 2",
-				start:  "2024-11-25T10:00:00",
-				end:    "2024-11-25T10:30:00.000Z",
-				owner:  "user@example.com",
-				notify: "",
+			add: contracts.Event{
+				Title:        "meeting 2",
+				StartTime:    "2024-11-25T10:00:00",
+				EndTime:      "2024-11-25T10:30:00.000Z",
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 			err: customerrors.ValidationError{Field: "StartTime", Err: errors.New("wrong date/time format")},
 		},
 		{
-			add: NewEventDto{
-				title:  "",
-				start:  "2024-11-25T10:00:00.000Z",
-				end:    "2024-11-25T10:30:00.000Z",
-				owner:  "user@example.com",
-				notify: "",
+			add: contracts.Event{
+				Title:        "",
+				StartTime:    "2024-11-25T10:00:00.000Z",
+				EndTime:      "2024-11-25T10:30:00.000Z",
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 			err: customerrors.ValidationError{Field: "Title", Err: errors.New("cannot be empty")},
 		},
 		{
-			add: NewEventDto{
-				title:  "Title 4",
-				start:  "2024-11-25T10:00:00.000Z",
-				end:    "2024-11-25T10:30:00.000Z",
-				owner:  "",
-				notify: "",
+			add: contracts.Event{
+				Title:        "Title 4",
+				StartTime:    "2024-11-25T10:00:00.000Z",
+				EndTime:      "2024-11-25T10:30:00.000Z",
+				OwnerEmail:   "",
+				NotifyBefore: "",
 			},
 			err: customerrors.ValidationError{Field: "OwnerEmail", Err: errors.New("cannot be empty")},
 		},
 		{
-			add: NewEventDto{
-				title:  "Title 5",
-				start:  "2024-11-25T11:00:00.000Z",
-				end:    "2024-11-25T10:30:00.000Z",
-				owner:  "user@example.com",
-				notify: "",
+			add: contracts.Event{
+				Title:        "Title 5",
+				StartTime:    "2024-11-25T11:00:00.000Z",
+				EndTime:      "2024-11-25T10:30:00.000Z",
+				OwnerEmail:   "user@example.com",
+				NotifyBefore: "",
 			},
 			err: customerrors.ValidationError{Field: "StartTime", Err: errors.New("must be less than EndTime")},
 		},
@@ -140,8 +129,7 @@ func TestAppCreateEventSimpleValidations(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			_, err := app.CreateEvent(ctx, tt.add.title, tt.add.start, tt.add.end,
-				tt.add.description, tt.add.owner, tt.add.notify)
+			_, err := app.CreateEvent(ctx, tt.add)
 			require.Error(t, err)
 			require.ErrorContains(t, err, tt.err.Error())
 			var valErr customerrors.ValidationError
@@ -162,15 +150,15 @@ func TestAppCreateEventTimeBusy(t *testing.T) {
 		},
 	}
 
-	tests := []NewEventDto{
+	tests := []contracts.Event{
 		{
-			id:          "xxx2",
-			title:       "meeting 2",
-			start:       "2024-11-25T12:00:00.000Z",
-			end:         "2024-11-25T12:30:00.000Z",
-			owner:       "user@example.com",
-			description: "new description2",
-			notify:      "",
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    "2024-11-25T12:00:00.000Z",
+			EndTime:      "2024-11-25T12:30:00.000Z",
+			OwnerEmail:   "user@example.com",
+			Description:  "new description2",
+			NotifyBefore: "",
 		},
 	}
 
@@ -188,7 +176,7 @@ func TestAppCreateEventTimeBusy(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			tt := tt
 			t.Parallel()
-			_, err := app.CreateEvent(ctx, tt.title, tt.start, tt.end, tt.description, tt.owner, tt.notify)
+			_, err := app.CreateEvent(ctx, tt)
 			require.Error(t, err)
 			require.ErrorContains(t, err, "StartTime|EndTime: another meeting exists for that period")
 			var valErr customerrors.ValidationError
@@ -352,24 +340,24 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 		},
 	}
 
-	tests := []NewEventDto{
+	tests := []contracts.Event{
 		{
-			id:          "xxx",
-			title:       "meeting 1",
-			start:       "2024-11-25T10:00:00.000Z",
-			end:         "2024-11-25T10:30:00.000Z",
-			owner:       "user@example.com",
-			description: "new description",
-			notify:      "",
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    "2024-11-25T10:00:00.000Z",
+			EndTime:      "2024-11-25T10:30:00.000Z",
+			OwnerEmail:   "user@example.com",
+			Description:  "new description",
+			NotifyBefore: "",
 		},
 		{
-			id:          "xxx2",
-			title:       "metting 2",
-			start:       "2024-11-25T12:00:00.000Z",
-			end:         "2024-11-25T12:30:00.000Z",
-			owner:       "user@example.com",
-			description: "new description2",
-			notify:      "",
+			ID:           "xxx2",
+			Title:        "metting 2",
+			StartTime:    "2024-11-25T12:00:00.000Z",
+			EndTime:      "2024-11-25T12:30:00.000Z",
+			OwnerEmail:   "user@example.com",
+			Description:  "new description2",
+			NotifyBefore: "",
 		},
 	}
 
@@ -387,32 +375,32 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			tt := tt
 			t.Parallel()
-			err := app.UpdateEvent(ctx, tt.id, tt.title, tt.start, tt.end, tt.description, tt.owner, tt.notify)
+			err := app.UpdateEvent(ctx, tt)
 			require.NoError(t, err)
-			ev, err := app.GetEvent(ctx, tt.id)
+			ev, err := app.GetEvent(ctx, tt.ID)
 			require.NoError(t, err)
-			require.Equal(t, tt.description, ev.Description)
+			require.Equal(t, tt.Description, ev.Description)
 		})
 	}
 }
 
 func TestAppUpdateEventNotFound(t *testing.T) {
-	tests := []NewEventDto{
+	tests := []contracts.Event{
 		{
-			id:     "id1",
-			title:  "meeting 1",
-			start:  "2024-11-25T10:00:00.000Z",
-			end:    "2024-11-25T10:30:00.000Z",
-			owner:  "user@example.com",
-			notify: "",
+			ID:           "id1",
+			Title:        "meeting 1",
+			StartTime:    "2024-11-25T10:00:00.000Z",
+			EndTime:      "2024-11-25T10:30:00.000Z",
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 		{
-			id:     "id2",
-			title:  "meeting 2",
-			start:  "2024-11-25T12:00:00.000Z",
-			end:    "2024-11-25T12:30:00.000Z",
-			owner:  "user@example.com",
-			notify: "",
+			ID:           "id2",
+			Title:        "meeting 2",
+			StartTime:    "2024-11-25T12:00:00.000Z",
+			EndTime:      "2024-11-25T12:30:00.000Z",
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
 		},
 	}
 
@@ -425,7 +413,7 @@ func TestAppUpdateEventNotFound(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			err := app.UpdateEvent(ctx, tt.id, tt.title, tt.start, tt.end, tt.description, tt.owner, tt.notify)
+			err := app.UpdateEvent(ctx, tt)
 			require.Error(t, err)
 		})
 	}

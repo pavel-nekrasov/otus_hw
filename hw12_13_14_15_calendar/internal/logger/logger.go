@@ -6,8 +6,13 @@ import (
 	"os"
 )
 
+const (
+	OutputStdout = "stdout"
+)
+
 type Logger struct {
 	logger *slog.Logger
+	file   *os.File
 }
 
 func New(level string, output string) *Logger {
@@ -22,12 +27,13 @@ func New(level string, output string) *Logger {
 	options := &slog.HandlerOptions{
 		Level: l,
 	}
+	var file *os.File
 	switch output {
-	case "stdout", "":
+	case OutputStdout, "":
 		logger = slog.New(slog.NewJSONHandler(os.Stdout, options))
 
 	default:
-		file, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE, 0o666)
+		file, err = os.OpenFile(output, os.O_WRONLY|os.O_CREATE, 0o666)
 		if err != nil {
 			log.Fatalf("Failed to create/open a log file: %v", err)
 		}
@@ -36,21 +42,28 @@ func New(level string, output string) *Logger {
 
 	return &Logger{
 		logger: logger,
+		file:   file,
 	}
 }
 
-func (l Logger) Info(msg string, args ...any) {
+func (l *Logger) Info(msg string, args ...any) {
 	l.logger.Info(msg, args...)
 }
 
-func (l Logger) Warn(msg string, args ...any) {
+func (l *Logger) Warn(msg string, args ...any) {
 	l.logger.Warn(msg, args...)
 }
 
-func (l Logger) Error(msg string, args ...any) {
+func (l *Logger) Error(msg string, args ...any) {
 	l.logger.Error(msg, args...)
 }
 
-func (l Logger) Debug(msg string, args ...any) {
+func (l *Logger) Debug(msg string, args ...any) {
 	l.logger.Error(msg, args...)
+}
+
+func (l *Logger) Close() {
+	if l.file != nil {
+		l.file.Close()
+	}
 }

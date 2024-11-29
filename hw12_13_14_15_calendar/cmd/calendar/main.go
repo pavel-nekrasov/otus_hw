@@ -32,6 +32,7 @@ func main() {
 
 	config := config.New(configFile)
 	logg := logger.New(config.Logger.Level, config.Logger.Output)
+	defer logg.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -56,22 +57,7 @@ func main() {
 		return
 	}
 
-	// ev, err := storage.GetEvent(ctx, "event-1")
-	// if err != nil {
-	// 	logg.Error(fmt.Sprintf("Failed to get event:%v", err))
-	// } else {
-	// 	logg.Info("Event received",
-	// 		"ID", ev.ID,
-	// 		"Title", ev.Title,
-	// 		"StartTime", ev.StartTime,
-	// 		"EndTime", ev.EndTime,
-	// 		"Desc", ev.Description,
-	// 		"Notify", ev.NotifyBefore,
-	// 		"Owner", ev.OwnerEmail)
-	// }
-
 	calendar := app.New(logg, storage)
-
 	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, logg, calendar)
 
 	go func() {

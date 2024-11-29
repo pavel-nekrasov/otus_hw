@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 	uuid "github.com/satori/go.uuid"
@@ -42,27 +43,25 @@ var (
 	errPeriodIsBusy    = errors.New("another meeting exists for that period")
 )
 
-func (a *App) CreateEvent(ctx context.Context,
-	title, start, end, description, owner, notify string,
-) (storage.Event, error) {
-	event, err := a.validateAttributes(ctx, "", title, start, end, description, owner, notify)
+func (a *App) CreateEvent(ctx context.Context, dto contracts.Event) (storage.Event, error) {
+	event, err := a.validateAttributes(ctx, dto)
 	if err != nil {
 		return storage.Event{}, err
 	}
 	event.ID = uuid.NewV4().String()
-	err = a.storage.AddEvent(ctx, *event)
+	err = a.storage.AddEvent(ctx, event)
 	if err != nil {
 		return storage.Event{}, err
 	}
-	return *event, nil
+	return event, nil
 }
 
-func (a *App) UpdateEvent(ctx context.Context, id, title, start, end, description, owner, notify string) error {
-	event, err := a.validateAttributes(ctx, id, title, start, end, description, owner, notify)
+func (a *App) UpdateEvent(ctx context.Context, dto contracts.Event) error {
+	event, err := a.validateAttributes(ctx, dto)
 	if err != nil {
 		return err
 	}
-	return a.storage.UpdateEvent(ctx, *event)
+	return a.storage.UpdateEvent(ctx, event)
 }
 
 func (a *App) GetEvent(ctx context.Context, eventID string) (storage.Event, error) {
@@ -81,60 +80,57 @@ func (a *App) ListEventsForDate(ctx context.Context, ownerEmail string, date str
 	return a.storage.ListEventsForPeriod(ctx, ownerEmail, dt, dt)
 }
 
-func (a *App) validateAttributes(
-	ctx context.Context,
-	id, title, start, end, description, ownerEmail, notify string,
-) (*storage.Event, error) {
-	if title == "" {
-		return nil, customerrors.ValidationError{Field: "Title", Err: errCannotBeEmpty}
+func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (storage.Event, error) {
+	if dto.Title == "" {
+		return storage.Event{}, customerrors.ValidationError{Field: "Title", Err: errCannotBeEmpty}
 	}
 
-	startTime, err := time.Parse(time.RFC3339, start)
+	startTime, err := time.Parse(time.RFC3339, dto.StartTime)
 	if err != nil {
-		return nil, customerrors.ValidationError{Field: "StartTime", Err: errWrongDateFormat}
+		return storage.Event{}, customerrors.ValidationError{Field: "StartTime", Err: errWrongDateFormat}
 	}
 
-	endTime, err := time.Parse(time.RFC3339, end)
+	endTime, err := time.Parse(time.RFC3339, dto.EndTime)
 	if err != nil {
-		return nil, customerrors.ValidationError{Field: "EndTime", Err: errWrongDateFormat}
+		return storage.Event{}, customerrors.ValidationError{Field: "EndTime", Err: errWrongDateFormat}
 	}
 
 	if startTime.After(endTime) {
-		return nil, customerrors.ValidationError{Field: "StartTime", Err: errWrongPeriod}
+		return storage.Event{}, customerrors.ValidationError{Field: "StartTime", Err: errWrongPeriod}
 	}
 
 	if startTime.Day() != endTime.Day() || startTime.Month() != endTime.Month() || startTime.Year() != endTime.Year() {
-		return nil, customerrors.ValidationError{Field: "StartTime", Err: errNotSameDay}
+		return storage.Event{}, customerrors.ValidationError{Field: "StartTime", Err: errNotSameDay}
 	}
 
-	if ownerEmail == "" {
-		return nil, customerrors.ValidationError{Field: "OwnerEmail", Err: errCannotBeEmpty}
+	if dto.OwnerEmail == "" {
+		return storage.Event{}, customerrors.ValidationError{Field: "OwnerEmail", Err: errCannotBeEmpty}
 	}
 
-	if notify != "" {
-		if _, err := time.Parse(time.RFC3339, notify); err != nil {
-			return nil, customerrors.ValidationError{Field: "Notify", Err: errWrongDateFormat}
+	if dto.NotifyBefore != "" {
+		if _, err := time.Parse(time.RFC3339, dto.NotifyBefore); err != nil {
+			return storage.Event{}, customerrors.ValidationError{Field: "Notify", Err: errWrongDateFormat}
 		}
 	}
 
-	existingEvents, err := a.storage.ListEventsForPeriod(ctx, ownerEmail, startTime, endTime)
+	existingEvents, err := a.storage.ListEventsForPeriod(ctx, dto.OwnerEmail, startTime, endTime)
 	if err != nil {
-		return nil, err
+		return storage.Event{}, err
 	}
 	for _, ev := range existingEvents {
 		if (startTime.Equal(ev.StartTime) || startTime.After(ev.StartTime)) &&
 			(endTime.Equal(ev.EndTime) || endTime.Before(ev.EndTime)) {
-			return nil, customerrors.ValidationError{Field: "StartTime|EndTime", Err: errPeriodIsBusy}
+			return storage.Event{}, customerrors.ValidationError{Field: "StartTime|EndTime", Err: errPeriodIsBusy}
 		}
 	}
 
-	return &storage.Event{
-		ID:           id,
-		Title:        title,
+	return storage.Event{
+		ID:           dto.ID,
+		Title:        dto.Title,
 		StartTime:    startTime,
 		EndTime:      endTime,
-		Description:  description,
-		OwnerEmail:   ownerEmail,
-		NotifyBefore: notify,
+		Description:  dto.Description,
+		OwnerEmail:   dto.OwnerEmail,
+		NotifyBefore: dto.NotifyBefore,
 	}, nil
 }
