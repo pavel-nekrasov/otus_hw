@@ -1,6 +1,6 @@
 module github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar
 
-go 1.22
+go 1.23
 
 require github.com/stretchr/testify v1.10.0
 
