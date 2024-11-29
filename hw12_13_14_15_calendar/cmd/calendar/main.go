@@ -3,21 +3,23 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/app"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/config"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/http"
 )
 
-var configFile string
+var configFile, migrateonly string
 
 func init() {
 	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&migrateonly, "migrateonly", "false", "apply migration and exit")
 }
 
 func main() {
@@ -28,17 +30,35 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
-
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
-
-	server := internalhttp.NewServer(logg, calendar)
+	config := config.New(configFile)
+	logg := logger.New(config.Logger.Level, config.Logger.Output)
+	defer logg.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
+
+	storage := NewStorage(config.Storage)
+	err := storage.Connect(ctx)
+	if err != nil {
+		logg.Error("failed to connect to storage: " + err.Error())
+		os.Exit(1) //nolint:gocritic
+	}
+	defer storage.Close(ctx)
+
+	if migrateonly == "true" {
+		logg.Info("Appying migrations...")
+		err := storage.Migrate(ctx, "migrations")
+		if err != nil {
+			logg.Error(fmt.Sprintf("Failed to apply migrations: %v", err))
+			os.Exit(1)
+		}
+		logg.Info("Done")
+		return
+	}
+
+	calendar := app.New(logg, storage)
+	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, logg, calendar)
 
 	go func() {
 		<-ctx.Done()
@@ -56,6 +76,6 @@ func main() {
 	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
 }

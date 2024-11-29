@@ -1,12 +1,10 @@
-package storage
-
-import "time"
+package contracts
 
 type Event struct {
 	ID           string
 	Title        string
-	StartTime    time.Time
-	EndTime      time.Time
+	StartTime    string
+	EndTime      string
 	Description  string
 	NotifyBefore string
 	OwnerEmail   string

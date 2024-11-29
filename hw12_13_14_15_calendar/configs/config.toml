@@ -1,5 +1,16 @@
 [logger]
 level = "INFO"
+output = "stdout"
 
-# TODO
-# ...
+[http]
+host = ""
+port = 8080
+
+[storage]
+mode = "memory"
+# mode = "postgres"  # memory, postgres
+# host = "localhost"
+# port = 5432
+# dbname = "calendar_db"
+# user = "otus"
+# password = "password"
