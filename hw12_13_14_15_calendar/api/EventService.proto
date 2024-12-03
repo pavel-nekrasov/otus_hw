@@ -1,7 +1,59 @@
 syntax = "proto3";
 
-package event;
+package calendar;
+option go_package = "./;pb";
 
-message Event {
-    // TODO
+import "google/protobuf/empty.proto";
+
+service Events {
+  rpc CreateEvent (NewEventRequest) returns (ScalarEventResponse) {}
+  rpc UpdateEvent (UpdateEventRequest) returns (ScalarEventResponse) {}
+  rpc GetEvent (EventIdRequest) returns (ScalarEventResponse) {}
+  rpc DeleteEvent (EventIdRequest) returns (google.protobuf.Empty) {}
+  rpc GetEventsForDay (DateRequest) returns (VectorEventResponse) {}
+  rpc GetEventsForWeek (DateRequest) returns (VectorEventResponse) {}
+}
+
+message TransientEvent {
+  string title = 1;
+  int64  start_time = 2;
+  int64  end_time = 3;
+  string description = 4;
+  string owner_email = 5;
+  string notify = 6;
+}
+
+message PersistedEvent {
+  string id = 1;
+  string title = 2;
+  int64  start_time = 3;
+  int64  end_time = 4;
+  string description = 5;
+  string owner_email = 6;
+  string notify = 7;
+}
+
+message NewEventRequest {
+  TransientEvent event = 1;
+}
+
+message UpdateEventRequest {
+  PersistedEvent event = 1;
+}
+
+message EventIdRequest {
+  string id = 1;
+}
+
+message DateRequest {
+  string owner = 1;
+  int64 date = 2;
+}
+
+message ScalarEventResponse {
+  PersistedEvent event = 1;
+}
+
+message VectorEventResponse {
+  repeated PersistedEvent events = 1;
 }

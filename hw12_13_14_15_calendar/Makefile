@@ -37,4 +37,14 @@ build-migrate:
 migrate: build-migrate
 	$(BIN_MIGRATE) -config ./configs/config.toml
 
+generate:
+	rm -rf internal/server/grpc/pb
+	mkdir -p internal/server/grpc/pb
+
+	protoc \
+		--proto_path=api/ \
+		--go_out=internal/server/grpc/pb \
+		--go-grpc_out=internal/server/grpc/pb \
+		api/*.proto
+
 .PHONY: build run build-img run-img version test lint

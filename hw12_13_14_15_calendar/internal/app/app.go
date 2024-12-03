@@ -56,12 +56,16 @@ func (a *App) CreateEvent(ctx context.Context, dto contracts.Event) (storage.Eve
 	return event, nil
 }
 
-func (a *App) UpdateEvent(ctx context.Context, dto contracts.Event) error {
+func (a *App) UpdateEvent(ctx context.Context, dto contracts.Event) (storage.Event, error) {
 	event, err := a.validateAttributes(ctx, dto)
 	if err != nil {
-		return err
+		return storage.Event{}, err
 	}
-	return a.storage.UpdateEvent(ctx, event)
+	err = a.storage.UpdateEvent(ctx, event)
+	if err != nil {
+		return storage.Event{}, err
+	}
+	return event, nil
 }
 
 func (a *App) GetEvent(ctx context.Context, eventID string) (storage.Event, error) {
@@ -72,12 +76,14 @@ func (a *App) DeleteEvent(ctx context.Context, eventID string) error {
 	return a.storage.DeleteEvent(ctx, eventID)
 }
 
-func (a *App) ListEventsForDate(ctx context.Context, ownerEmail string, date string) ([]storage.Event, error) {
-	dt, err := time.Parse(time.DateOnly, date)
-	if err != nil {
-		return nil, customerrors.ParamError{Param: "date", Err: errWrongDateFormat}
-	}
+func (a *App) ListEventsForDate(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error) {
+	dt := time.Unix(date, 0)
 	return a.storage.ListEventsForPeriod(ctx, ownerEmail, dt, dt)
+}
+
+func (a *App) ListEventsForWeek(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error) {
+	dt := time.Unix(date, 0)
+	return a.storage.ListEventsForPeriod(ctx, ownerEmail, dt, dt.AddDate(0, 0, 7))
 }
 
 func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (storage.Event, error) {
@@ -85,15 +91,8 @@ func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (stor
 		return storage.Event{}, customerrors.ValidationError{Field: "Title", Err: errCannotBeEmpty}
 	}
 
-	startTime, err := time.Parse(time.RFC3339, dto.StartTime)
-	if err != nil {
-		return storage.Event{}, customerrors.ValidationError{Field: "StartTime", Err: errWrongDateFormat}
-	}
-
-	endTime, err := time.Parse(time.RFC3339, dto.EndTime)
-	if err != nil {
-		return storage.Event{}, customerrors.ValidationError{Field: "EndTime", Err: errWrongDateFormat}
-	}
+	startTime := time.Unix(dto.StartTime, 0)
+	endTime := time.Unix(dto.EndTime, 0)
 
 	if startTime.After(endTime) {
 		return storage.Event{}, customerrors.ValidationError{Field: "StartTime", Err: errWrongPeriod}
@@ -108,7 +107,7 @@ func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (stor
 	}
 
 	if dto.NotifyBefore != "" {
-		if _, err := time.Parse(time.RFC3339, dto.NotifyBefore); err != nil {
+		if _, err := time.ParseDuration(dto.NotifyBefore); err != nil {
 			return storage.Event{}, customerrors.ValidationError{Field: "Notify", Err: errWrongDateFormat}
 		}
 	}
