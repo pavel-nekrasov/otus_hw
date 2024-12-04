@@ -3,15 +3,43 @@ syntax = "proto3";
 package calendar;
 option go_package = "./;pb";
 
+import "google/api/annotations.proto";
+import "google/api/http.proto";
 import "google/protobuf/empty.proto";
 
 service Events {
-  rpc CreateEvent (NewEventRequest) returns (ScalarEventResponse) {}
-  rpc UpdateEvent (UpdateEventRequest) returns (ScalarEventResponse) {}
-  rpc GetEvent (EventIdRequest) returns (ScalarEventResponse) {}
-  rpc DeleteEvent (EventIdRequest) returns (google.protobuf.Empty) {}
-  rpc GetEventsForDay (DateRequest) returns (VectorEventResponse) {}
-  rpc GetEventsForWeek (DateRequest) returns (VectorEventResponse) {}
+  rpc CreateEvent (NewEventRequest) returns (ScalarEventResponse) {
+    option (google.api.http) = {
+      post: "/events"
+      body: "*"
+    };
+  }
+  rpc UpdateEvent (UpdateEventRequest) returns (ScalarEventResponse) {
+    option (google.api.http) = {
+      put: "/events/{id}"
+      body: "*"
+    };
+  }
+  rpc GetEvent (EventIdRequest) returns (ScalarEventResponse) {
+    option (google.api.http) = {
+      get: "/events/{id}"
+    };
+  }
+  rpc DeleteEvent (EventIdRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/events/{id}"
+    };
+  }
+  rpc GetEventsForDay (DateRequest) returns (VectorEventResponse) {
+    option (google.api.http) = {
+      get: "/events/query/day"
+    };
+  }
+  rpc GetEventsForWeek (DateRequest) returns (VectorEventResponse) {
+    option (google.api.http) = {
+      get: "/events/query/week"
+    };
+  }
 }
 
 message TransientEvent {
@@ -38,7 +66,8 @@ message NewEventRequest {
 }
 
 message UpdateEventRequest {
-  PersistedEvent event = 1;
+  string id = 1;
+  TransientEvent event = 2;
 }
 
 message EventIdRequest {

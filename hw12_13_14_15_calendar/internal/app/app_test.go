@@ -315,7 +315,7 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 			Title:        "meeting 2",
 			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail:   "user@example.com",
+			OwnerEmail:   "user2@example.com",
 			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
@@ -335,7 +335,7 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 			Title:        "metting 2",
 			StartTime:    time.Date(2024, 11, 25, 12, 0, 0, 0, time.UTC).Unix(),
 			EndTime:      time.Date(2024, 11, 25, 12, 30, 0, 0, time.UTC).Unix(),
-			OwnerEmail:   "user@example.com",
+			OwnerEmail:   "user2@example.com",
 			Description:  "new description2",
 			NotifyBefore: "",
 		},
@@ -395,6 +395,142 @@ func TestAppUpdateEventNotFound(t *testing.T) {
 
 			_, err := app.UpdateEvent(ctx, tt)
 			require.Error(t, err)
+		})
+	}
+}
+
+func TestAppFindEventsForDate(t *testing.T) {
+	data := []storage.Event{
+		{
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
+		},
+		{
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 2, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user2@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
+		},
+	}
+
+	tests := []struct {
+		owner       string
+		date        int64
+		expectedCnt int
+	}{
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user2@example.com",
+			date:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+		{
+			owner:       "user3@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+	}
+
+	logger := logger.New("DEBUG", "stdout")
+	ctx := context.Background()
+	storage := memorystorage.New()
+	app := New(logger, storage)
+
+	for _, ev := range data {
+		err := storage.AddEvent(ctx, ev)
+		require.NoError(t, err)
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			tt := tt
+			t.Parallel()
+			events, err := app.ListEventsForDate(ctx, tt.owner, tt.date)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedCnt, len(events))
+		})
+	}
+}
+
+func TestAppFindEventsForWeek(t *testing.T) {
+	data := []storage.Event{
+		{
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
+		},
+		{
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 10, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user2@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
+		},
+	}
+
+	tests := []struct {
+		owner       string
+		date        int64
+		expectedCnt int
+	}{
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user2@example.com",
+			date:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+		{
+			owner:       "user3@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+	}
+
+	logger := logger.New("DEBUG", "stdout")
+	ctx := context.Background()
+	storage := memorystorage.New()
+	app := New(logger, storage)
+
+	for _, ev := range data {
+		err := storage.AddEvent(ctx, ev)
+		require.NoError(t, err)
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			tt := tt
+			t.Parallel()
+			events, err := app.ListEventsForWeek(ctx, tt.owner, tt.date)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedCnt, len(events))
 		})
 	}
 }

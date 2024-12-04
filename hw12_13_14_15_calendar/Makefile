@@ -1,5 +1,6 @@
 BIN := "./bin/calendar"
 BIN_MIGRATE := "./bin/calendar_migrate"
+BIN_GRPC_CLIENT := "./bin/calendar_grpc_client"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -37,6 +38,14 @@ build-migrate:
 migrate: build-migrate
 	$(BIN_MIGRATE) -config ./configs/config.toml
 
+
+build-grpc-client:
+	go build -v -o $(BIN_GRPC_CLIENT) -ldflags "$(LDFLAGS)" ./cmd/client/grpc
+
+run-grpc-client: build-grpc-client
+	$(BIN_GRPC_CLIENT) -config ./configs/config.toml
+
+
 generate:
 	rm -rf internal/server/grpc/pb
 	mkdir -p internal/server/grpc/pb
@@ -47,4 +56,10 @@ generate:
 		--go-grpc_out=internal/server/grpc/pb \
 		api/*.proto
 
-.PHONY: build run build-img run-img version test lint
+	protoc -I ./api \
+	--grpc-gateway_out internal/server/grpc/pb \
+    --grpc-gateway_opt paths=source_relative \
+    --grpc-gateway_opt generate_unbound_methods=true \
+    api/*.proto
+
+.PHONY: build run build-img run-img version test lint generate

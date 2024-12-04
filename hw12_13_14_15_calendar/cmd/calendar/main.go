@@ -11,7 +11,7 @@ import (
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/app"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/config"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/http"
+	internalgrpc "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc"
 )
 
 var configFile string
@@ -45,7 +45,12 @@ func main() {
 	defer storage.Close(ctx)
 
 	calendar := app.New(logg, storage)
-	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, logg, calendar)
+	server := internalgrpc.NewServer(config.Endpoint.Host,
+		config.Endpoint.GRPCPort,
+		config.Endpoint.HTTPPort,
+		logg,
+		calendar,
+	)
 
 	go func() {
 		<-ctx.Done()

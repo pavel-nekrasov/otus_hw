@@ -2,13 +2,22 @@ package internalgrpc
 
 import (
 	"context"
+	"fmt"
+	"net"
+	"net/http"
+	"time"
 
-	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/events"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/middleware"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/pb"
+	httpmiddleware "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/http/middleware"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 type Application interface {
@@ -21,139 +30,83 @@ type Application interface {
 }
 
 type Server struct {
-	app Application
-	pb.UnimplementedEventsServer
+	host     string
+	grpcPort int
+	httpPort int
+	logger   Logger
+	app      Application
+	server   *grpc.Server
+	gwServer *http.Server
 }
 
-func (s *Server) toPersistedEvent(ev storage.Event) *pb.PersistedEvent {
-	return &pb.PersistedEvent{
-		Id:          ev.ID,
-		Title:       ev.Title,
-		StartTime:   ev.StartTime.Unix(),
-		EndTime:     ev.EndTime.Unix(),
-		Description: ev.Description,
-		OwnerEmail:  ev.OwnerEmail,
-		Notify:      ev.NotifyBefore,
+type Logger interface {
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+	Debug(msg string, args ...any)
+}
+
+func NewServer(host string, grpcPort int, httpPort int, logger Logger, app Application) *Server {
+	return &Server{
+		host:     host,
+		grpcPort: grpcPort,
+		httpPort: httpPort,
+		logger:   logger,
+		app:      app,
 	}
 }
 
-func (s *Server) CreateEvent(ctx context.Context, req *pb.NewEventRequest) (*pb.ScalarEventResponse, error) {
-	payload := req.GetEvent()
-	if payload == nil {
-		return nil, status.Error(codes.InvalidArgument, "event is not specified")
-	}
-
-	event, err := s.app.CreateEvent(ctx, contracts.Event{
-		Title:        payload.Title,
-		StartTime:    payload.StartTime,
-		EndTime:      payload.EndTime,
-		Description:  payload.Description,
-		OwnerEmail:   payload.OwnerEmail,
-		NotifyBefore: payload.Notify,
-	})
+func (s *Server) Start(ctx context.Context) error {
+	grpcBindAddr := fmt.Sprintf("%v:%v", s.host, s.grpcPort)
+	s.logger.Info(fmt.Sprintf("Starting GRPC on %v...", grpcBindAddr))
+	lsn, err := net.Listen("tcp", grpcBindAddr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &pb.ScalarEventResponse{
-		Event: s.toPersistedEvent(event),
-	}, nil
+	httpBindAddr := fmt.Sprintf("%v:%v", s.host, s.httpPort)
+	s.logger.Info(fmt.Sprintf("Starting HTTP on %v...", httpBindAddr))
+
+	gwClient, err := grpc.NewClient(grpcBindAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+
+	gwMux := runtime.NewServeMux()
+	err = pb.RegisterEventsHandler(ctx, gwMux, gwClient)
+	if err != nil {
+		return err
+	}
+
+	gwMuxWithLogging := httpmiddleware.NewLoggingMiddleware(s.logger, gwMux)
+	s.gwServer = &http.Server{Addr: httpBindAddr, Handler: gwMuxWithLogging, ReadTimeout: time.Second * 10}
+	go func() {
+		if err := s.gwServer.ListenAndServe(); err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
+
+	s.server = grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			logging.UnaryServerInterceptor(middleware.InterceptorLogger(s.logger)),
+		),
+	)
+	pb.RegisterEventsServer(s.server, events.NewService(s.logger, s.app))
+	reflection.Register(s.server)
+
+	go func() {
+		if err := s.server.Serve(lsn); err != nil {
+			panic(err)
+		}
+	}()
+
+	<-ctx.Done()
+	return nil
 }
 
-func (s *Server) UpdateEvent(ctx context.Context, req *pb.UpdateEventRequest) (*pb.ScalarEventResponse, error) {
-	payload := req.GetEvent()
-	if payload == nil {
-		return nil, status.Error(codes.InvalidArgument, "event is not specified")
-	}
+func (s *Server) Stop(ctx context.Context) error {
+	s.logger.Info("Stopping adapters...")
 
-	event, err := s.app.UpdateEvent(ctx, contracts.Event{
-		ID:           payload.Id,
-		Title:        payload.Title,
-		StartTime:    payload.StartTime,
-		EndTime:      payload.EndTime,
-		Description:  payload.Description,
-		OwnerEmail:   payload.OwnerEmail,
-		NotifyBefore: payload.Notify,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.ScalarEventResponse{
-		Event: s.toPersistedEvent(event),
-	}, nil
-}
-
-func (s *Server) GetEvent(ctx context.Context, req *pb.EventIdRequest) (*pb.ScalarEventResponse, error) {
-	id := req.GetId()
-	if id == "" {
-		return nil, status.Error(codes.InvalidArgument, "id is not specified")
-	}
-
-	event, err := s.app.GetEvent(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.ScalarEventResponse{
-		Event: s.toPersistedEvent(event),
-	}, nil
-}
-
-func (s *Server) DeleteEvent(ctx context.Context, req *pb.EventIdRequest) (*empty.Empty, error) {
-	id := req.GetId()
-	if id == "" {
-		return nil, status.Error(codes.InvalidArgument, "id is not specified")
-	}
-
-	err := s.app.DeleteEvent(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &empty.Empty{}, nil
-}
-
-func (s *Server) GetEventsForDay(ctx context.Context, req *pb.DateRequest) (*pb.VectorEventResponse, error) {
-	owner := req.GetOwner()
-	date := req.GetDate()
-	if owner == "" {
-		return nil, status.Error(codes.InvalidArgument, "owner is not specified")
-	}
-
-	result, err := s.app.ListEventsForDate(ctx, owner, date)
-	if err != nil {
-		return nil, err
-	}
-
-	persitedEvents := make([]*pb.PersistedEvent, 0)
-	for _, e := range result {
-		persitedEvents = append(persitedEvents, s.toPersistedEvent(e))
-	}
-
-	return &pb.VectorEventResponse{
-		Events: persitedEvents,
-	}, nil
-}
-
-func (s *Server) GetEventsForWeek(ctx context.Context, req *pb.DateRequest) (*pb.VectorEventResponse, error) {
-	owner := req.GetOwner()
-	date := req.GetDate()
-	if owner == "" {
-		return nil, status.Error(codes.InvalidArgument, "owner is not specified")
-	}
-
-	result, err := s.app.ListEventsForWeek(ctx, owner, date)
-	if err != nil {
-		return nil, err
-	}
-
-	persistedEvents := make([]*pb.PersistedEvent, 0)
-	for _, e := range result {
-		persistedEvents = append(persistedEvents, s.toPersistedEvent(e))
-	}
-
-	return &pb.VectorEventResponse{
-		Events: persistedEvents,
-	}, nil
+	defer s.server.Stop()
+	return s.gwServer.Shutdown(ctx)
 }

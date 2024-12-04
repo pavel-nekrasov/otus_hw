@@ -78,7 +78,7 @@ func (a *App) DeleteEvent(ctx context.Context, eventID string) error {
 
 func (a *App) ListEventsForDate(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error) {
 	dt := time.Unix(date, 0)
-	return a.storage.ListEventsForPeriod(ctx, ownerEmail, dt, dt)
+	return a.storage.ListEventsForPeriod(ctx, ownerEmail, dt, dt.AddDate(0, 0, 1))
 }
 
 func (a *App) ListEventsForWeek(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error) {
@@ -117,7 +117,7 @@ func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (stor
 		return storage.Event{}, err
 	}
 	for _, ev := range existingEvents {
-		if (startTime.Equal(ev.StartTime) || startTime.After(ev.StartTime)) &&
+		if ev.ID != dto.ID && (startTime.Equal(ev.StartTime) || startTime.After(ev.StartTime)) &&
 			(endTime.Equal(ev.EndTime) || endTime.Before(ev.EndTime)) {
 			return storage.Event{}, customerrors.ValidationError{Field: "StartTime|EndTime", Err: errPeriodIsBusy}
 		}
