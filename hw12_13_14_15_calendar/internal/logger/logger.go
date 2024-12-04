@@ -62,6 +62,11 @@ func (l *Logger) Debug(msg string, args ...any) {
 	l.logger.Error(msg, args...)
 }
 
+func (l *Logger) Fatal(msg string, args ...any) {
+	l.logger.Error(msg, args...)
+	os.Exit(1)
+}
+
 func (l *Logger) Close() {
 	if l.file != nil {
 		l.file.Close()

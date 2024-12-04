@@ -12,9 +12,9 @@ const (
 )
 
 type Config struct {
-	Logger  LoggerConf
-	HTTP    HTTPConf
-	Storage StorageConf
+	Logger   LoggerConf
+	Endpoint EndpointConf
+	Storage  StorageConf
 }
 
 type LoggerConf struct {
@@ -22,9 +22,10 @@ type LoggerConf struct {
 	Output string
 }
 
-type HTTPConf struct {
-	Host string
-	Port int
+type EndpointConf struct {
+	Host     string
+	HTTPPort int
+	GRPCPort int
 }
 
 type StorageConf struct {

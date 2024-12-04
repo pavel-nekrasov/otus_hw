@@ -34,7 +34,6 @@ func NewServer(host string, port int, logger Logger, app Application) *Server {
 func (s *Server) Start(ctx context.Context) error {
 	bindAddr := fmt.Sprintf("%v:%v", s.host, s.port)
 	s.logger.Info(fmt.Sprintf("Starting on %v...", bindAddr))
-	s.httpServer = &http.Server{Addr: bindAddr, ReadTimeout: time.Second * 10}
 
 	helloHandler := handlers.NewHelloService(s.logger)
 	mux := http.NewServeMux()
@@ -42,9 +41,8 @@ func (s *Server) Start(ctx context.Context) error {
 
 	muxWithLogging := middleware.NewLoggingMiddleware(s.logger, mux)
 
-	s.httpServer.Handler = muxWithLogging
+	s.httpServer = &http.Server{Addr: bindAddr, Handler: muxWithLogging, ReadTimeout: time.Second * 10}
 
-	s.httpServer.ListenAndServe()
 	go func() {
 		if err := s.httpServer.ListenAndServe(); err != http.ErrServerClosed {
 			panic(err)
