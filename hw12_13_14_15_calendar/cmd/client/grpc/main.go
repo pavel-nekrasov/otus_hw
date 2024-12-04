@@ -42,6 +42,8 @@ func main() {
 		os.Exit(1) //nolint:gocritic
 	}
 
+	defer conn.Close()
+
 	client := pb.NewEventsClient(conn)
 	log.Info("Sending CREATE request")
 	createReq := &pb.NewEventRequest{
