@@ -19,29 +19,29 @@ func TestAppCreateEventSuccess(t *testing.T) {
 	tests := []contracts.Event{
 		{
 			Title:        "meeting 1",
-			StartTime:    "2024-11-25T10:00:00.000Z",
-			EndTime:      "2024-11-25T10:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 10, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 10, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user@example.com",
 			NotifyBefore: "",
 		},
 		{
 			Title:        "meeting 2",
-			StartTime:    "2024-11-25T12:00:00.000Z",
-			EndTime:      "2024-11-25T12:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 12, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 12, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user@example.com",
 			NotifyBefore: "",
 		},
 		{
 			Title:        "meeting 3",
-			StartTime:    "2024-11-25T10:00:00.000Z",
-			EndTime:      "2024-11-25T10:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 10, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 10, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user2@example.com",
 			NotifyBefore: "",
 		},
 		{
 			Title:        "meeting 4",
-			StartTime:    "2024-11-25T12:00:00.000Z",
-			EndTime:      "2024-11-25T12:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 12, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 12, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user2@example.com",
 			NotifyBefore: "",
 		},
@@ -70,29 +70,9 @@ func TestAppCreateEventSimpleValidations(t *testing.T) {
 	}{
 		{
 			add: contracts.Event{
-				Title:        "meeting 1",
-				StartTime:    "2024-11-25T10:00:00.000Z",
-				EndTime:      "2024-11-25T10:30:00",
-				OwnerEmail:   "user@example.com",
-				NotifyBefore: "",
-			},
-			err: customerrors.ValidationError{Field: "EndTime", Err: errors.New("wrong date/time format")},
-		},
-		{
-			add: contracts.Event{
-				Title:        "meeting 2",
-				StartTime:    "2024-11-25T10:00:00",
-				EndTime:      "2024-11-25T10:30:00.000Z",
-				OwnerEmail:   "user@example.com",
-				NotifyBefore: "",
-			},
-			err: customerrors.ValidationError{Field: "StartTime", Err: errors.New("wrong date/time format")},
-		},
-		{
-			add: contracts.Event{
 				Title:        "",
-				StartTime:    "2024-11-25T10:00:00.000Z",
-				EndTime:      "2024-11-25T10:30:00.000Z",
+				StartTime:    time.Date(2024, 11, 25, 10, 0, 0, 0, time.UTC).Unix(),
+				EndTime:      time.Date(2024, 11, 25, 10, 30, 0, 0, time.UTC).Unix(),
 				OwnerEmail:   "user@example.com",
 				NotifyBefore: "",
 			},
@@ -101,8 +81,8 @@ func TestAppCreateEventSimpleValidations(t *testing.T) {
 		{
 			add: contracts.Event{
 				Title:        "Title 4",
-				StartTime:    "2024-11-25T10:00:00.000Z",
-				EndTime:      "2024-11-25T10:30:00.000Z",
+				StartTime:    time.Date(2024, 11, 25, 10, 0, 0, 0, time.UTC).Unix(),
+				EndTime:      time.Date(2024, 11, 25, 10, 30, 0, 0, time.UTC).Unix(),
 				OwnerEmail:   "",
 				NotifyBefore: "",
 			},
@@ -111,8 +91,8 @@ func TestAppCreateEventSimpleValidations(t *testing.T) {
 		{
 			add: contracts.Event{
 				Title:        "Title 5",
-				StartTime:    "2024-11-25T11:00:00.000Z",
-				EndTime:      "2024-11-25T10:30:00.000Z",
+				StartTime:    time.Date(2024, 11, 25, 11, 0, 0, 0, time.UTC).Unix(),
+				EndTime:      time.Date(2024, 11, 25, 10, 0, 0, 0, time.UTC).Unix(),
 				OwnerEmail:   "user@example.com",
 				NotifyBefore: "",
 			},
@@ -154,8 +134,8 @@ func TestAppCreateEventTimeBusy(t *testing.T) {
 		{
 			ID:           "xxx2",
 			Title:        "meeting 2",
-			StartTime:    "2024-11-25T12:00:00.000Z",
-			EndTime:      "2024-11-25T12:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 12, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 12, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user@example.com",
 			Description:  "new description2",
 			NotifyBefore: "",
@@ -335,7 +315,7 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 			Title:        "meeting 2",
 			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
-			OwnerEmail:   "user@example.com",
+			OwnerEmail:   "user2@example.com",
 			NotifyBefore: "2024-01-01T12:00:00Z00:00",
 		},
 	}
@@ -344,8 +324,8 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 		{
 			ID:           "xxx",
 			Title:        "meeting 1",
-			StartTime:    "2024-11-25T10:00:00.000Z",
-			EndTime:      "2024-11-25T10:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 10, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 10, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user@example.com",
 			Description:  "new description",
 			NotifyBefore: "",
@@ -353,9 +333,9 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 		{
 			ID:           "xxx2",
 			Title:        "metting 2",
-			StartTime:    "2024-11-25T12:00:00.000Z",
-			EndTime:      "2024-11-25T12:30:00.000Z",
-			OwnerEmail:   "user@example.com",
+			StartTime:    time.Date(2024, 11, 25, 12, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 12, 30, 0, 0, time.UTC).Unix(),
+			OwnerEmail:   "user2@example.com",
 			Description:  "new description2",
 			NotifyBefore: "",
 		},
@@ -375,7 +355,7 @@ func TestAppUpdateEventSuccess(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			tt := tt
 			t.Parallel()
-			err := app.UpdateEvent(ctx, tt)
+			_, err := app.UpdateEvent(ctx, tt)
 			require.NoError(t, err)
 			ev, err := app.GetEvent(ctx, tt.ID)
 			require.NoError(t, err)
@@ -389,16 +369,16 @@ func TestAppUpdateEventNotFound(t *testing.T) {
 		{
 			ID:           "id1",
 			Title:        "meeting 1",
-			StartTime:    "2024-11-25T10:00:00.000Z",
-			EndTime:      "2024-11-25T10:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 10, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 10, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user@example.com",
 			NotifyBefore: "",
 		},
 		{
 			ID:           "id2",
 			Title:        "meeting 2",
-			StartTime:    "2024-11-25T12:00:00.000Z",
-			EndTime:      "2024-11-25T12:30:00.000Z",
+			StartTime:    time.Date(2024, 11, 25, 12, 0, 0, 0, time.UTC).Unix(),
+			EndTime:      time.Date(2024, 11, 25, 12, 30, 0, 0, time.UTC).Unix(),
 			OwnerEmail:   "user@example.com",
 			NotifyBefore: "",
 		},
@@ -413,8 +393,144 @@ func TestAppUpdateEventNotFound(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			err := app.UpdateEvent(ctx, tt)
+			_, err := app.UpdateEvent(ctx, tt)
 			require.Error(t, err)
+		})
+	}
+}
+
+func TestAppFindEventsForDate(t *testing.T) {
+	data := []storage.Event{
+		{
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
+		},
+		{
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 2, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user2@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
+		},
+	}
+
+	tests := []struct {
+		owner       string
+		date        int64
+		expectedCnt int
+	}{
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user2@example.com",
+			date:        time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+		{
+			owner:       "user3@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+	}
+
+	logger := logger.New("DEBUG", "stdout")
+	ctx := context.Background()
+	storage := memorystorage.New()
+	app := New(logger, storage)
+
+	for _, ev := range data {
+		err := storage.AddEvent(ctx, ev)
+		require.NoError(t, err)
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			tt := tt
+			t.Parallel()
+			events, err := app.ListEventsForDate(ctx, tt.owner, tt.date)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedCnt, len(events))
+		})
+	}
+}
+
+func TestAppFindEventsForWeek(t *testing.T) {
+	data := []storage.Event{
+		{
+			ID:           "xxx",
+			Title:        "meeting 1",
+			StartTime:    time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 1, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user@example.com",
+			NotifyBefore: "",
+		},
+		{
+			ID:           "xxx2",
+			Title:        "meeting 2",
+			StartTime:    time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+			EndTime:      time.Date(2024, 1, 10, 12, 30, 0, 0, time.UTC),
+			OwnerEmail:   "user2@example.com",
+			NotifyBefore: "2024-01-01T12:00:00Z00:00",
+		},
+	}
+
+	tests := []struct {
+		owner       string
+		date        int64
+		expectedCnt int
+	}{
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user2@example.com",
+			date:        time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 1,
+		},
+		{
+			owner:       "user@example.com",
+			date:        time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+		{
+			owner:       "user3@example.com",
+			date:        time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
+			expectedCnt: 0,
+		},
+	}
+
+	logger := logger.New("DEBUG", "stdout")
+	ctx := context.Background()
+	storage := memorystorage.New()
+	app := New(logger, storage)
+
+	for _, ev := range data {
+		err := storage.AddEvent(ctx, ev)
+		require.NoError(t, err)
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			tt := tt
+			t.Parallel()
+			events, err := app.ListEventsForWeek(ctx, tt.owner, tt.date)
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedCnt, len(events))
 		})
 	}
 }

@@ -2,9 +2,10 @@
 level = "INFO"
 output = "stdout"
 
-[http]
+[endpoint]
 host = ""
-port = 8080
+httpPort = 8080
+grpcPort = 15000
 
 [storage]
 mode = "memory"
