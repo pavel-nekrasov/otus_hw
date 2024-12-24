@@ -9,32 +9,21 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/events"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/middleware"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/pb"
 	httpmiddleware "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/http/middleware"
-	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
-
-type Application interface {
-	CreateEvent(ctx context.Context, dto contracts.Event) (storage.Event, error)
-	UpdateEvent(ctx context.Context, dto contracts.Event) (storage.Event, error)
-	GetEvent(ctx context.Context, eventID string) (storage.Event, error)
-	DeleteEvent(ctx context.Context, eventID string) error
-	ListEventsForDate(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error)
-	ListEventsForWeek(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error)
-}
 
 type Server struct {
 	host     string
 	grpcPort int
 	httpPort int
 	logger   Logger
-	app      Application
+	app      events.Application
 	server   *grpc.Server
 	gwServer *http.Server
 }
@@ -46,7 +35,7 @@ type Logger interface {
 	Debug(msg string, args ...any)
 }
 
-func NewServer(host string, grpcPort int, httpPort int, logger Logger, app Application) *Server {
+func NewServer(host string, grpcPort int, httpPort int, logger Logger, app events.Application) *Server {
 	return &Server{
 		host:     host,
 		grpcPort: grpcPort,

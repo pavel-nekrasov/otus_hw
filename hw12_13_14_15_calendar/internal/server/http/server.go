@@ -25,6 +25,8 @@ type Logger interface {
 	Debug(msg string, args ...any)
 }
 
+const ReadTimeout = 10
+
 type Application interface{}
 
 func NewServer(host string, port int, logger Logger, app Application) *Server {
@@ -41,7 +43,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	muxWithLogging := middleware.NewLoggingMiddleware(s.logger, mux)
 
-	s.httpServer = &http.Server{Addr: bindAddr, Handler: muxWithLogging, ReadTimeout: time.Second * 10}
+	s.httpServer = &http.Server{Addr: bindAddr, Handler: muxWithLogging, ReadTimeout: time.Second * ReadTimeout}
 
 	go func() {
 		if err := s.httpServer.ListenAndServe(); err != http.ErrServerClosed {
