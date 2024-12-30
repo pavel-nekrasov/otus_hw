@@ -1,0 +1,10 @@
+[logger]
+level = "INFO"
+output = "stdout"
+
+[queue]
+host = "localhost"
+port = 5432
+exchange = "calendar_notifications"
+user = "otus"
+password = "password"

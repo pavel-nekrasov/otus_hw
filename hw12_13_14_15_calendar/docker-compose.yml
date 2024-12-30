@@ -14,8 +14,22 @@ services:
         aliases:
           - postgresql
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    hostname: rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+    restart: always
+    networks:
+      calendar-network:
+        aliases:
+          - rabbitmq
 networks:
   calendar-network:
 
 volumes:
   pgdata:
+  rabbitdata:

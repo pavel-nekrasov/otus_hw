@@ -110,7 +110,7 @@ func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 
 func (s *Storage) GetEvent(ctx context.Context, eventID string) (storage.Event, error) {
 	row := s.db.QueryRowContext(ctx,
-		"SELECT id, title, start_time, end_time, description, notify_before, owner_email FROM events WHERE id = $1",
+		"SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email FROM events WHERE id = $1",
 		eventID,
 	)
 	if errors.Is(row.Err(), sql.ErrNoRows) {
@@ -121,12 +121,14 @@ func (s *Storage) GetEvent(ctx context.Context, eventID string) (storage.Event, 
 	}
 	var event storage.Event
 	var notify, description sql.NullString
+	var notifyTime sql.NullTime
 	err := row.Scan(&event.ID,
 		&event.Title,
 		&event.StartTime,
 		&event.EndTime,
 		&description,
 		&notify,
+		&notifyTime,
 		&event.OwnerEmail,
 	)
 	if err != nil {
@@ -139,6 +141,10 @@ func (s *Storage) GetEvent(ctx context.Context, eventID string) (storage.Event, 
 
 	if notify.Valid {
 		event.NotifyBefore = notify.String
+	}
+
+	if notifyTime.Valid {
+		event.NotifyTime = notifyTime.Time
 	}
 
 	return event, nil

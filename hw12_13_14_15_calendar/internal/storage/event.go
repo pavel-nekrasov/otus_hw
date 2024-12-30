@@ -9,5 +9,6 @@ type Event struct {
 	EndTime      time.Time
 	Description  string
 	NotifyBefore string
+	NotifyTime   time.Time
 	OwnerEmail   string
 }

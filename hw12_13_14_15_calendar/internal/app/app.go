@@ -106,10 +106,14 @@ func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (stor
 		return storage.Event{}, customerrors.ValidationError{Field: "OwnerEmail", Err: errCannotBeEmpty}
 	}
 
+	var notifyTime time.Time
 	if dto.NotifyBefore != "" {
-		if _, err := time.ParseDuration(dto.NotifyBefore); err != nil {
+		duration, err := time.ParseDuration(dto.NotifyBefore)
+		if err != nil {
 			return storage.Event{}, customerrors.ValidationError{Field: "Notify", Err: errWrongDateFormat}
 		}
+
+		notifyTime = startTime.Add(-duration)
 	}
 
 	existingEvents, err := a.storage.ListEventsForPeriod(ctx, dto.OwnerEmail, startTime, endTime)
@@ -131,5 +135,6 @@ func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (stor
 		Description:  dto.Description,
 		OwnerEmail:   dto.OwnerEmail,
 		NotifyBefore: dto.NotifyBefore,
+		NotifyTime:   notifyTime,
 	}, nil
 }

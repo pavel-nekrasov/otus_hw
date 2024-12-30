@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	config := config.New(configFile)
+	config := config.NewCalendarConfig(configFile)
 	logg := logger.New(config.Logger.Level, config.Logger.Output)
 	defer logg.Close()
 

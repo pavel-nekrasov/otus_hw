@@ -1,0 +1,19 @@
+[logger]
+level = "INFO"
+output = "stdout"
+
+[storage]
+mode = "postgres"
+# mode = "postgres"  # memory, postgres
+host = "localhost"
+port = 5432
+dbname = "calendar_db"
+user = "otus"
+password = "password"
+
+[queue]
+host = "localhost"
+port = 5432
+exchange = "calendar_notifications"
+user = "otus"
+password = "password"

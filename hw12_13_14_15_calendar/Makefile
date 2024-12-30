@@ -10,7 +10,7 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	$(BIN) -config ./configs/config.toml
+	$(BIN) -config ./configs/calendar_config.toml
 
 build-img:
 	docker build \
@@ -36,14 +36,14 @@ lint: install-lint-deps
 build-migrate:
 	go build -v -o $(BIN_MIGRATE) -ldflags "$(LDFLAGS)" ./cmd/migrate
 migrate: build-migrate
-	$(BIN_MIGRATE) -config ./configs/config.toml
+	$(BIN_MIGRATE) -config ./configs/calendar_config.toml
 
 
 build-grpc-client:
 	go build -v -o $(BIN_GRPC_CLIENT) -ldflags "$(LDFLAGS)" ./cmd/client/grpc
 
 run-grpc-client: build-grpc-client
-	$(BIN_GRPC_CLIENT) -config ./configs/config.toml
+	$(BIN_GRPC_CLIENT) -config ./configs/calendar_config.toml
 
 
 generate:
