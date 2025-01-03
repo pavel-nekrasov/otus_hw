@@ -1,6 +1,8 @@
 BIN := "./bin/calendar"
 BIN_MIGRATE := "./bin/calendar_migrate"
 BIN_GRPC_CLIENT := "./bin/calendar_grpc_client"
+BIN_SENDER := "./bin/sender"
+BIN_SCHEDULER := "./bin/scheduler"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -11,6 +13,18 @@ build:
 
 run: build
 	$(BIN) -config ./configs/calendar_config.toml
+
+build_sender:
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/sender
+
+run_sender: build_sender
+	$(BIN_SENDER) -config ./configs/sender_config.toml
+
+build_scheduler:
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/scheduler
+
+run_scheduler: build_scheduler
+	$(BIN_SCHEDULER) -config ./configs/scheduler_config.toml
 
 build-img:
 	docker build \

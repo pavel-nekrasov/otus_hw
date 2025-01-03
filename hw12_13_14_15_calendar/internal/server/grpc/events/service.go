@@ -6,18 +6,18 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/pb"
-	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage/model"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type Application interface {
-	CreateEvent(ctx context.Context, dto contracts.Event) (storage.Event, error)
-	UpdateEvent(ctx context.Context, dto contracts.Event) (storage.Event, error)
-	GetEvent(ctx context.Context, eventID string) (storage.Event, error)
+	CreateEvent(ctx context.Context, dto contracts.Event) (model.Event, error)
+	UpdateEvent(ctx context.Context, dto contracts.Event) (model.Event, error)
+	GetEvent(ctx context.Context, eventID string) (model.Event, error)
 	DeleteEvent(ctx context.Context, eventID string) error
-	ListEventsForDate(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error)
-	ListEventsForWeek(ctx context.Context, ownerEmail string, date int64) ([]storage.Event, error)
+	ListEventsForDate(ctx context.Context, ownerEmail string, date int64) ([]model.Event, error)
+	ListEventsForWeek(ctx context.Context, ownerEmail string, date int64) ([]model.Event, error)
 }
 
 type Logger interface {
@@ -37,7 +37,7 @@ func NewService(logger Logger, app Application) *Service {
 	return &Service{logger: logger, app: app}
 }
 
-func (s *Service) toPersistedEvent(ev storage.Event) *pb.PersistedEvent {
+func (s *Service) toPersistedEvent(ev model.Event) *pb.PersistedEvent {
 	return &pb.PersistedEvent{
 		Id:          ev.ID,
 		Title:       ev.Title,

@@ -18,14 +18,15 @@ type CalendarConfig struct {
 }
 
 type SchedulerConfig struct {
-	Logger  LoggerConf
-	Storage StorageConf
-	Queue   QueueConfig
+	Logger   LoggerConf
+	Storage  StorageConf
+	Queue    QueueProducerConf
+	Schedule ScheduleConf
 }
 
 type SenderConfig struct {
 	Logger LoggerConf
-	Queue  QueueConfig
+	Queue  QueueConsumerConf
 }
 
 type LoggerConf struct {
@@ -48,13 +49,29 @@ type StorageConf struct {
 	Password string
 }
 
-type QueueConfig struct {
+type QueueServerConf struct {
 	Host     string
 	Port     int
-	Exchnage string
-	Queue    string
 	User     string
 	Password string
+}
+
+type QueueConsumerConf struct {
+	QueueServerConf
+	Exchange   string
+	Queue      string
+	RoutingKey string
+}
+
+type QueueProducerConf struct {
+	QueueServerConf
+	Exchange   string
+	RoutingKey string
+}
+
+type ScheduleConf struct {
+	RetentionPeriod string
+	Interval        string
 }
 
 func NewCalendarConfig(filePath string) (c CalendarConfig) {

@@ -4,7 +4,8 @@ output = "stdout"
 
 [queue]
 host = "localhost"
-port = 5432
+port = 5672
 exchange = "calendar_notifications"
-user = "otus"
-password = "password"
+queue = "notification_sender"
+user = "guest"
+password = "guest"
