@@ -16,13 +16,13 @@ type Consumer struct {
 	routingKey   string
 	tag          string
 	channel      *amqp.Channel
-	handler      Handler
+	handler      *Handler
 }
 
 func NewConsumer(
 	conn *Connection,
 	conf config.QueueConsumerConf,
-	handler Handler,
+	handler *Handler,
 ) *Consumer {
 	return &Consumer{
 		connection:   conn,

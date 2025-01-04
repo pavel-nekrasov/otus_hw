@@ -60,7 +60,7 @@ func main() {
 		return nil
 	})
 
-	consumer := queue.NewConsumer(queueConn, config.Queue, *handler)
+	consumer := queue.NewConsumer(queueConn, config.Queue, handler)
 	defer consumer.Close()
 
 	log.Info("Sender app started")
