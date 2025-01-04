@@ -8,10 +8,10 @@ DOCKER_IMG="calendar:develop"
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
-build:
+build_calendar:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
-run: build
+run_calendar: build_calendar
 	$(BIN) -config ./configs/calendar_config.toml
 
 build_sender:
@@ -25,6 +25,11 @@ build_scheduler:
 
 run_scheduler: build_scheduler
 	$(BIN_SCHEDULER) -config ./configs/scheduler_config.toml
+
+build: build_calendar build_scheduler build_sender
+
+run: build
+	$(BIN) -config ./configs/calendar_config.toml
 
 build-img:
 	docker build \
@@ -76,4 +81,4 @@ generate:
     --grpc-gateway_opt generate_unbound_methods=true \
     api/*.proto
 
-.PHONY: build run build-img run-img version test lint generate
+.PHONY: build run build_calendar run_calendar build_sender run_sender build_scheduler run_scheduler build-img run-img version test lint generate
