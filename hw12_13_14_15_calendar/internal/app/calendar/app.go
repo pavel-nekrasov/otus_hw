@@ -22,7 +22,7 @@ type Storage interface {
 	UpdateEvent(ctx context.Context, event model.Event) error
 	GetEvent(ctx context.Context, eventID string) (model.Event, error)
 	DeleteEvent(ctx context.Context, eventID string) error
-	ListEventsForPeriod(ctx context.Context, ownerEmail string, startDate, endDate time.Time) ([]model.Event, error)
+	ListOwnerEventsForPeriod(ctx context.Context, ownerEmail string, startDate, endDate time.Time) ([]model.Event, error)
 }
 
 func New(logger common.Logger, storage Storage) *App {
@@ -72,12 +72,12 @@ func (a *App) DeleteEvent(ctx context.Context, eventID string) error {
 
 func (a *App) ListEventsForDate(ctx context.Context, ownerEmail string, date int64) ([]model.Event, error) {
 	dt := time.Unix(date, 0)
-	return a.storage.ListEventsForPeriod(ctx, ownerEmail, dt, dt.AddDate(0, 0, 1))
+	return a.storage.ListOwnerEventsForPeriod(ctx, ownerEmail, dt, dt.AddDate(0, 0, 1))
 }
 
 func (a *App) ListEventsForWeek(ctx context.Context, ownerEmail string, date int64) ([]model.Event, error) {
 	dt := time.Unix(date, 0)
-	return a.storage.ListEventsForPeriod(ctx, ownerEmail, dt, dt.AddDate(0, 0, 7))
+	return a.storage.ListOwnerEventsForPeriod(ctx, ownerEmail, dt, dt.AddDate(0, 0, 7))
 }
 
 func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (model.Event, error) {
@@ -110,7 +110,7 @@ func (a *App) validateAttributes(ctx context.Context, dto contracts.Event) (mode
 		notifyTime = startTime.Add(-duration)
 	}
 
-	existingEvents, err := a.storage.ListEventsForPeriod(ctx, dto.OwnerEmail, startTime, endTime)
+	existingEvents, err := a.storage.ListOwnerEventsForPeriod(ctx, dto.OwnerEmail, startTime, endTime)
 	if err != nil {
 		return model.Event{}, err
 	}

@@ -16,7 +16,9 @@ type (
 		UpdateEvent(ctx context.Context, event model.Event) error
 		GetEvent(ctx context.Context, eventID string) (model.Event, error)
 		DeleteEvent(ctx context.Context, eventID string) error
-		ListEventsForPeriod(ctx context.Context, ownerEmail string, startDate, endDate time.Time) ([]model.Event, error)
+		DeleteEventsOlderThan(ctx context.Context, time time.Time) error
+		ListOwnerEventsForPeriod(ctx context.Context, ownerEmail string, startDate, endDate time.Time) ([]model.Event, error)
+		ListEventsToBeNotified(ctx context.Context, startTime, endTime time.Time) ([]model.Event, error)
 	}
 
 	Control interface {

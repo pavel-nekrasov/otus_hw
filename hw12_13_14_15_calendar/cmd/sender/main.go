@@ -38,7 +38,7 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	app := app.New(log)
+	senderApp := app.New(log)
 
 	queueConn := queue.NewConnection(config.Queue.QueueServerConf)
 	if err := queueConn.Connect(); err != nil {
@@ -53,7 +53,7 @@ func main() {
 			log.Error(fmt.Sprintf("failed to parse notification: %s", err))
 			return err
 		}
-		if err := app.Notify(ctx, notification); err != nil {
+		if err := senderApp.Notify(ctx, notification); err != nil {
 			log.Error(fmt.Sprintf("failed to send notification: %s", err))
 			return err
 		}

@@ -65,20 +65,7 @@ func (s *Storage) GetEvent(_ context.Context, eventID string) (model.Event, erro
 	return s.events[eventID], nil
 }
 
-func (s *Storage) DeleteEvent(_ context.Context, eventID string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	_, ok := s.events[eventID]
-	if !ok {
-		return customerrors.NotFound{Message: fmt.Sprintf("Event with id = \"%v\" not found", eventID)}
-	}
-
-	delete(s.events, eventID)
-	return nil
-}
-
-func (s *Storage) ListEventsForPeriod(
+func (s *Storage) ListOwnerEventsForPeriod(
 	_ context.Context,
 	ownerEmail string,
 	startDate,
@@ -100,4 +87,57 @@ func (s *Storage) ListEventsForPeriod(
 	}
 
 	return result, nil
+}
+
+func (s *Storage) ListEventsToBeNotified(
+	_ context.Context,
+	startTime,
+	endTime time.Time,
+) ([]model.Event, error) {
+	result := make([]model.Event, 0)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, ev := range s.events {
+		if (startTime.Before(ev.NotifyTime) || startTime.Equal(ev.NotifyTime)) &&
+			(endTime.After(ev.NotifyTime) || endTime.Equal(ev.NotifyTime)) {
+			result = append(result, ev)
+		}
+	}
+
+	return result, nil
+}
+
+func (s *Storage) DeleteEvent(_ context.Context, eventID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, ok := s.events[eventID]
+	if !ok {
+		return customerrors.NotFound{Message: fmt.Sprintf("Event with id = \"%v\" not found", eventID)}
+	}
+
+	delete(s.events, eventID)
+	return nil
+}
+
+func (s *Storage) DeleteEventsOlderThan(
+	_ context.Context,
+	time time.Time,
+) error {
+	result := make([]model.Event, 0)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, ev := range s.events {
+		if ev.StartTime.Before(time) {
+			result = append(result, ev)
+		}
+	}
+
+	for _, ev := range result {
+		delete(s.events, ev.ID)
+	}
+
+	return nil
 }

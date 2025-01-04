@@ -43,7 +43,7 @@ func main() {
 	retentionPeriod, err := time.ParseDuration(config.Schedule.RetentionPeriod)
 	if err != nil {
 		log.Error(fmt.Sprintf("failed to parse interval value: %s", err.Error()))
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
@@ -56,8 +56,6 @@ func main() {
 		os.Exit(1)
 	}
 	defer storage.Close(ctx)
-
-	calendar := app.New(log, storage, retentionPeriod)
 
 	queueConn := queue.NewConnection(config.Queue.QueueServerConf)
 	if err := queueConn.Connect(); err != nil {
@@ -73,6 +71,8 @@ func main() {
 	}
 	defer producer.Close()
 
+	schedulerApp := app.New(log, storage, producer, scanInterval, retentionPeriod)
+
 	log.Info("Scheduler is started")
 	ticker := time.NewTicker(scanInterval)
 	defer ticker.Stop()
@@ -82,7 +82,7 @@ func main() {
 		case <-ctx.Done():
 			goto exit
 		case <-ticker.C:
-			calendar.Process(ctx)
+			schedulerApp.Process(ctx)
 		}
 	}
 
