@@ -43,6 +43,7 @@ func main() {
 	queueConn := queue.NewConnection(config.Queue.QueueServerConf)
 	if err := queueConn.Connect(); err != nil {
 		log.Error(fmt.Sprintf("failed to connect to queue: %s", err.Error()))
+		log.Close()
 		os.Exit(1) //nolint:gocritic
 	}
 	defer queueConn.Close()
@@ -66,6 +67,9 @@ func main() {
 	log.Info("Sender app started")
 	if err := consumer.Start(ctx); err != nil {
 		log.Error(fmt.Sprintf("failed to connect to queue: %s", err.Error()))
+		consumer.Close()
+		queueConn.Close()
+		log.Close()
 		os.Exit(1)
 	}
 

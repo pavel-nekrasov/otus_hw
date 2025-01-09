@@ -31,10 +31,9 @@ func (t *Mock) Publish(_ []byte) error {
 	return nil
 }
 
-func TestAppProcessSuccess(t *testing.T) {
+func TestAppNotificationSuccess(t *testing.T) {
 	tests := []struct {
 		Data               []model.Event
-		expectedDeleteCnt  int
 		expectedPublishCnt int
 	}{
 		{
@@ -42,19 +41,16 @@ func TestAppProcessSuccess(t *testing.T) {
 				{ID: "id1"},
 				{ID: "id2"},
 			},
-			expectedDeleteCnt:  1,
 			expectedPublishCnt: 2,
 		},
 		{
 			Data: []model.Event{
 				{ID: "id1"},
 			},
-			expectedDeleteCnt:  1,
 			expectedPublishCnt: 1,
 		},
 		{
 			Data:               []model.Event{},
-			expectedDeleteCnt:  1,
 			expectedPublishCnt: 0,
 		},
 	}
@@ -70,9 +66,49 @@ func TestAppProcessSuccess(t *testing.T) {
 			mock := &Mock{}
 			app := New(logger, mock, mock, 1*time.Second, 1*time.Second)
 			mock.Data = tt.Data
-			app.Process(ctx)
-			require.Equal(t, tt.expectedDeleteCnt, mock.deleteCnt)
+			app.ProcessNotifications(ctx)
 			require.Equal(t, tt.expectedPublishCnt, mock.publishCnt)
+		})
+	}
+}
+
+func TestAppPurgeSuccess(t *testing.T) {
+	tests := []struct {
+		Data              []model.Event
+		expectedDeleteCnt int
+	}{
+		{
+			Data: []model.Event{
+				{ID: "id1"},
+				{ID: "id2"},
+			},
+			expectedDeleteCnt: 1,
+		},
+		{
+			Data: []model.Event{
+				{ID: "id1"},
+			},
+			expectedDeleteCnt: 1,
+		},
+		{
+			Data:              []model.Event{},
+			expectedDeleteCnt: 1,
+		},
+	}
+
+	logger := logger.New("INFO", "stdout")
+	ctx := context.Background()
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			tt := tt
+			t.Parallel()
+
+			mock := &Mock{}
+			app := New(logger, mock, mock, 1*time.Second, 1*time.Second)
+			mock.Data = tt.Data
+			app.PurgeOldEvents(ctx)
+			require.Equal(t, tt.expectedDeleteCnt, mock.deleteCnt)
 		})
 	}
 }

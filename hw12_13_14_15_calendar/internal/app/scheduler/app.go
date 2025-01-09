@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/common"
@@ -41,48 +40,45 @@ func New(logger common.Logger, storage Storage, publisher Publisher, scanInterva
 	}
 }
 
-func (a *App) Process(ctx context.Context) {
-	var wg sync.WaitGroup
+func (a *App) ProcessNotifications(ctx context.Context) error {
+	a.logger.Debug("Checking events to be notified...")
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		a.logger.Debug("Checking events to be notified...")
+	events, err := a.storage.ListEventsToBeNotified(ctx, a.shiftBoundary(), time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to retrieve events to be notified: %w", err)
+	}
 
-		events, err := a.storage.ListEventsToBeNotified(ctx, a.shiftBoundary(), time.Now())
+	for _, ev := range events {
+		dto := contracts.Notification{ID: ev.ID, Title: ev.Title, Time: ev.StartTime.Unix(), OwnerEmail: ev.OwnerEmail}
+		a.logger.Debug(fmt.Sprintf("Publishing notification for event ID=%s", ev.ID))
+
+		data, err := json.Marshal(dto)
 		if err != nil {
-			a.logger.Error("failed to retrieve events to be notified: %s", err)
+			return fmt.Errorf("failed to serialize event: %w", err)
 		}
-
-		for _, ev := range events {
-			dto := contracts.Notification{ID: ev.ID, Title: ev.Title, Time: ev.StartTime.Unix(), OwnerEmail: ev.OwnerEmail}
-			a.logger.Debug(fmt.Sprintf("Publishing notification for event ID=%s", ev.ID))
-
-			data, err := json.Marshal(dto)
-			if err != nil {
-				a.logger.Error("failed to serialize event: %s", err)
-			}
-			err = a.publisher.Publish(data)
-			if err != nil {
-				a.logger.Error("failed to publish event: %s", err)
-			}
+		err = a.publisher.Publish(data)
+		if err != nil {
+			return fmt.Errorf("failed to publish event: %w", err)
 		}
-	}()
+	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		a.logger.Debug("Purging old events...")
+	return nil
+}
 
-		if err := a.storage.DeleteEventsOlderThan(ctx, time.Now().Add(-a.retentionPeriod)); err != nil {
-			a.logger.Error("failed to delete old events: %s", err)
-		}
-	}()
+func (a *App) PurgeOldEvents(ctx context.Context) error {
+	a.logger.Debug("Purging old events...")
 
-	wg.Wait()
+	if err := a.storage.DeleteEventsOlderThan(ctx, time.Now().Add(-a.retentionPeriod)); err != nil {
+		return fmt.Errorf("failed to delete old events: %w", err)
+	}
+
+	return nil
 }
 
 func (a *App) shiftBoundary() time.Time {
-	a.startTime = a.startTime.Add(a.scanInterval)
-	return a.startTime.Add(-a.scanInterval)
+	defer func() {
+		a.startTime = a.startTime.Add(a.scanInterval)
+	}()
+
+	return a.startTime
 }

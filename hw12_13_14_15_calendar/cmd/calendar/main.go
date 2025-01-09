@@ -41,6 +41,7 @@ func main() {
 	err := storage.Connect(ctx)
 	if err != nil {
 		log.Error("failed to connect to storage: " + err.Error())
+		log.Close()
 		os.Exit(1) //nolint:gocritic
 	}
 	defer storage.Close(ctx)

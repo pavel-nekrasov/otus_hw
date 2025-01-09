@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -37,12 +38,14 @@ func main() {
 	scanInterval, err := time.ParseDuration(config.Schedule.Interval)
 	if err != nil {
 		log.Error(fmt.Sprintf("failed to parse interval value: %s", err.Error()))
+		log.Close()
 		os.Exit(1) //nolint:gocritic
 	}
 
 	retentionPeriod, err := time.ParseDuration(config.Schedule.RetentionPeriod)
 	if err != nil {
 		log.Error(fmt.Sprintf("failed to parse interval value: %s", err.Error()))
+		log.Close()
 		os.Exit(1)
 	}
 
@@ -53,6 +56,7 @@ func main() {
 	storage := storage.NewStorage(config.Storage)
 	if err := storage.Connect(ctx); err != nil {
 		log.Error("failed to connect to storage: " + err.Error())
+		log.Close()
 		os.Exit(1)
 	}
 	defer storage.Close(ctx)
@@ -60,6 +64,8 @@ func main() {
 	queueConn := queue.NewConnection(config.Queue.QueueServerConf)
 	if err := queueConn.Connect(); err != nil {
 		log.Error(fmt.Sprintf("failed to connect to queue: %s", err.Error()))
+		storage.Close(ctx)
+		log.Close()
 		os.Exit(1)
 	}
 	defer queueConn.Close()
@@ -67,6 +73,9 @@ func main() {
 	producer := queue.NewProducer(queueConn, config.Queue)
 	if err := producer.Start(); err != nil {
 		log.Error(fmt.Sprintf("failed to create exchange: %s", err.Error()))
+		queueConn.Close()
+		storage.Close(ctx)
+		log.Close()
 		os.Exit(1)
 	}
 	defer producer.Close()
@@ -77,16 +86,33 @@ func main() {
 	ticker := time.NewTicker(scanInterval)
 	defer ticker.Stop()
 
+LOOP:
 	for {
 		select {
 		case <-ctx.Done():
-			goto exit
+			break LOOP
 		case <-ticker.C:
-			schedulerApp.Process(ctx)
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			go func() {
+				if err := schedulerApp.ProcessNotifications(ctx); err != nil {
+					log.Error("failed to process notifications: %s", err)
+				}
+				wg.Done()
+			}()
+
+			wg.Add(1)
+			go func() {
+				if err := schedulerApp.PurgeOldEvents(ctx); err != nil {
+					log.Error("failed to purge events: %s", err)
+				}
+				wg.Done()
+			}()
+
+			wg.Wait()
 		}
 	}
-
-exit:
 
 	log.Info("Scheduler is stopped")
 }
