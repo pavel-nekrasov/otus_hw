@@ -1,4 +1,4 @@
-package storage
+package model
 
 import "time"
 
@@ -9,5 +9,6 @@ type Event struct {
 	EndTime      time.Time
 	Description  string
 	NotifyBefore string
+	NotifyTime   time.Time
 	OwnerEmail   string
 }

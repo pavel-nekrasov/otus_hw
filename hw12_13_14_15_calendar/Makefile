@@ -1,16 +1,35 @@
 BIN := "./bin/calendar"
 BIN_MIGRATE := "./bin/calendar_migrate"
 BIN_GRPC_CLIENT := "./bin/calendar_grpc_client"
+BIN_SENDER := "./bin/sender"
+BIN_SCHEDULER := "./bin/scheduler"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
-build:
+build_calendar:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
+run_calendar: build_calendar
+	$(BIN) -config ./configs/calendar_config.toml
+
+build_sender:
+	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/sender
+
+run_sender: build_sender
+	$(BIN_SENDER) -config ./configs/sender_config.toml
+
+build_scheduler:
+	go build -v -o $(BIN_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/scheduler
+
+run_scheduler: build_scheduler
+	$(BIN_SCHEDULER) -config ./configs/scheduler_config.toml
+
+build: build_calendar build_scheduler build_sender
+
 run: build
-	$(BIN) -config ./configs/config.toml
+	$(BIN) -config ./configs/calendar_config.toml
 
 build-img:
 	docker build \
@@ -36,14 +55,14 @@ lint: install-lint-deps
 build-migrate:
 	go build -v -o $(BIN_MIGRATE) -ldflags "$(LDFLAGS)" ./cmd/migrate
 migrate: build-migrate
-	$(BIN_MIGRATE) -config ./configs/config.toml
+	$(BIN_MIGRATE) -config ./configs/calendar_config.toml
 
 
 build-grpc-client:
 	go build -v -o $(BIN_GRPC_CLIENT) -ldflags "$(LDFLAGS)" ./cmd/client/grpc
 
 run-grpc-client: build-grpc-client
-	$(BIN_GRPC_CLIENT) -config ./configs/config.toml
+	$(BIN_GRPC_CLIENT) -config ./configs/calendar_config.toml
 
 
 generate:
@@ -62,4 +81,4 @@ generate:
     --grpc-gateway_opt generate_unbound_methods=true \
     api/*.proto
 
-.PHONY: build run build-img run-img version test lint generate
+.PHONY: build run build_calendar run_calendar build_sender run_sender build_scheduler run_scheduler build-img run-img version test lint generate

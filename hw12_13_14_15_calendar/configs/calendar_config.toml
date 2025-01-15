@@ -1,5 +1,5 @@
 [logger]
-level = "INFO"
+level = "DEBUG"
 output = "stdout"
 
 [endpoint]
@@ -8,10 +8,10 @@ httpPort = 8080
 grpcPort = 15000
 
 [storage]
-mode = "memory"
+mode = "postgres"
 # mode = "postgres"  # memory, postgres
-# host = "localhost"
-# port = 5432
-# dbname = "calendar_db"
-# user = "otus"
-# password = "password"
+host = "localhost"
+port = 5432
+dbname = "calendar_db"
+user = "otus"
+password = "password"

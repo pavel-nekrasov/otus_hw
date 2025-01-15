@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/app"
+	app "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/app/calendar"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/events"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc/pb"

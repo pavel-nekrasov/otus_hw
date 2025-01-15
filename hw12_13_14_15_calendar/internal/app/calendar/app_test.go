@@ -1,4 +1,4 @@
-package app
+package calendarapp
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
-	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -119,7 +119,7 @@ func TestAppCreateEventSimpleValidations(t *testing.T) {
 }
 
 func TestAppCreateEventTimeBusy(t *testing.T) {
-	data := []storage.Event{
+	data := []model.Event{
 		{
 			ID:           "xxx",
 			Title:        "meeting 1",
@@ -166,7 +166,7 @@ func TestAppCreateEventTimeBusy(t *testing.T) {
 }
 
 func TestAppGetEventSuccess(t *testing.T) {
-	tests := []storage.Event{
+	tests := []model.Event{
 		{
 			ID:           "xxx",
 			Title:        "meeting 1",
@@ -237,7 +237,7 @@ func TestAppGetEventNotFound(t *testing.T) {
 }
 
 func TestAppDeleteEventSuccess(t *testing.T) {
-	tests := []storage.Event{
+	tests := []model.Event{
 		{
 			ID:           "xxx",
 			Title:        "meeting 1",
@@ -301,7 +301,7 @@ func TestAppDeleteEventNotFound(t *testing.T) {
 }
 
 func TestAppUpdateEventSuccess(t *testing.T) {
-	data := []storage.Event{
+	data := []model.Event{
 		{
 			ID:           "xxx",
 			Title:        "meeting 1",
@@ -400,7 +400,7 @@ func TestAppUpdateEventNotFound(t *testing.T) {
 }
 
 func TestAppFindEventsForDate(t *testing.T) {
-	data := []storage.Event{
+	data := []model.Event{
 		{
 			ID:           "xxx",
 			Title:        "meeting 1",
@@ -468,7 +468,7 @@ func TestAppFindEventsForDate(t *testing.T) {
 }
 
 func TestAppFindEventsForWeek(t *testing.T) {
-	data := []storage.Event{
+	data := []model.Event{
 		{
 			ID:           "xxx",
 			Title:        "meeting 1",

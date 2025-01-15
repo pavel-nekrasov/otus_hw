@@ -11,10 +11,22 @@ const (
 	StorageModeMemory   = "memory"
 )
 
-type Config struct {
+type CalendarConfig struct {
 	Logger   LoggerConf
 	Endpoint EndpointConf
 	Storage  StorageConf
+}
+
+type SchedulerConfig struct {
+	Logger   LoggerConf
+	Storage  StorageConf
+	Queue    QueueProducerConf
+	Schedule ScheduleConf
+}
+
+type SenderConfig struct {
+	Logger LoggerConf
+	Queue  QueueConsumerConf
 }
 
 type LoggerConf struct {
@@ -37,7 +49,48 @@ type StorageConf struct {
 	Password string
 }
 
-func New(filePath string) (c Config) {
+type QueueServerConf struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+}
+
+type QueueConsumerConf struct {
+	QueueServerConf
+	Exchange   string
+	Queue      string
+	RoutingKey string
+}
+
+type QueueProducerConf struct {
+	QueueServerConf
+	Exchange   string
+	RoutingKey string
+}
+
+type ScheduleConf struct {
+	RetentionPeriod string
+	Interval        string
+}
+
+func NewCalendarConfig(filePath string) (c CalendarConfig) {
+	_, err := toml.DecodeFile(filePath, &c)
+	if err != nil {
+		log.Fatalf("Failed to load config file: %v", err)
+	}
+	return c
+}
+
+func NewSchedulerConfig(filePath string) (c SchedulerConfig) {
+	_, err := toml.DecodeFile(filePath, &c)
+	if err != nil {
+		log.Fatalf("Failed to load config file: %v", err)
+	}
+	return c
+}
+
+func NewSenderConfig(filePath string) (c SenderConfig) {
 	_, err := toml.DecodeFile(filePath, &c)
 	if err != nil {
 		log.Fatalf("Failed to load config file: %v", err)

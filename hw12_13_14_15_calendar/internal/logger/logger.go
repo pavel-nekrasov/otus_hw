@@ -59,7 +59,7 @@ func (l *Logger) Error(msg string, args ...any) {
 }
 
 func (l *Logger) Debug(msg string, args ...any) {
-	l.logger.Error(msg, args...)
+	l.logger.Debug(msg, args...)
 }
 
 func (l *Logger) Fatal(msg string, args ...any) {

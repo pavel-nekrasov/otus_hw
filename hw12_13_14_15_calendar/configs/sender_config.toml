@@ -1,0 +1,11 @@
+[logger]
+level = "DEBUG"
+output = "stdout"
+
+[queue]
+host = "localhost"
+port = 5672
+exchange = "calendar_notifications"
+queue = "notification_sender"
+user = "guest"
+password = "guest"

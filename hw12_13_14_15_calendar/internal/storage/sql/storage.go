@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/jackc/pgx/stdlib" // need import pgx
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
-	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage/model"
 	goose "github.com/pressly/goose/v3"
 )
 
@@ -52,10 +52,10 @@ func (s *Storage) Migrate(_ context.Context, migrate string) (err error) {
 	return nil
 }
 
-func (s *Storage) AddEvent(ctx context.Context, event storage.Event) error {
+func (s *Storage) AddEvent(ctx context.Context, event model.Event) error {
 	res, err := s.db.ExecContext(ctx, `INSERT INTO events 
-		(id, title, start_time, end_time, description, notify_before, owner_email) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		(id, title, start_time, end_time, description, notify_before, owner_email, notify_time) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		event.ID,
 		event.Title,
 		event.StartTime,
@@ -63,6 +63,7 @@ func (s *Storage) AddEvent(ctx context.Context, event storage.Event) error {
 		event.Description,
 		event.NotifyBefore,
 		event.OwnerEmail,
+		event.NotifyTime,
 	)
 	if err != nil {
 		return err
@@ -80,9 +81,10 @@ func (s *Storage) AddEvent(ctx context.Context, event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
+func (s *Storage) UpdateEvent(ctx context.Context, event model.Event) error {
 	res, err := s.db.ExecContext(ctx, `UPDATE events
-		SET title = $2, start_time = $3, end_time = $4, description = $5, notify_before = $6, owner_email = $7 
+		SET title = $2, start_time = $3, end_time = $4, description = $5,
+		notify_before = $6, owner_email = $7, notify_time = $8
 		WHERE id = $1`,
 		event.ID,
 		event.Title,
@@ -91,6 +93,7 @@ func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 		event.Description,
 		event.NotifyBefore,
 		event.OwnerEmail,
+		event.NotifyTime,
 	)
 	if err != nil {
 		return err
@@ -108,29 +111,32 @@ func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) GetEvent(ctx context.Context, eventID string) (storage.Event, error) {
+func (s *Storage) GetEvent(ctx context.Context, eventID string) (model.Event, error) {
 	row := s.db.QueryRowContext(ctx,
-		"SELECT id, title, start_time, end_time, description, notify_before, owner_email FROM events WHERE id = $1",
+		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email 
+		FROM events WHERE id = $1`,
 		eventID,
 	)
 	if errors.Is(row.Err(), sql.ErrNoRows) {
-		return storage.Event{}, customerrors.NotFound{Message: fmt.Sprintf("Event with id = \"%v\" not found", eventID)}
+		return model.Event{}, customerrors.NotFound{Message: fmt.Sprintf("Event with id = \"%v\" not found", eventID)}
 	}
 	if row.Err() != nil {
-		return storage.Event{}, row.Err()
+		return model.Event{}, row.Err()
 	}
-	var event storage.Event
+	var event model.Event
 	var notify, description sql.NullString
+	var notifyTime sql.NullTime
 	err := row.Scan(&event.ID,
 		&event.Title,
 		&event.StartTime,
 		&event.EndTime,
 		&description,
 		&notify,
+		&notifyTime,
 		&event.OwnerEmail,
 	)
 	if err != nil {
-		return storage.Event{}, err
+		return model.Event{}, err
 	}
 
 	if description.Valid {
@@ -139,6 +145,10 @@ func (s *Storage) GetEvent(ctx context.Context, eventID string) (storage.Event, 
 
 	if notify.Valid {
 		event.NotifyBefore = notify.String
+	}
+
+	if notifyTime.Valid {
+		event.NotifyTime = notifyTime.Time
 	}
 
 	return event, nil
@@ -162,15 +172,15 @@ func (s *Storage) DeleteEvent(ctx context.Context, eventID string) error {
 	return nil
 }
 
-func (s *Storage) ListEventsForPeriod(
+func (s *Storage) ListOwnerEventsForPeriod(
 	ctx context.Context,
 	ownerEmail string,
 	startDate,
 	endDate time.Time,
-) ([]storage.Event, error) {
-	result := make([]storage.Event, 0)
+) ([]model.Event, error) {
+	result := make([]model.Event, 0)
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, title, start_time, end_time, description, notify_before, owner_email 
+		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email 
 		FROM events 
 		WHERE owner_email = $1 AND start_time >= $2 AND end_time <= $3`,
 		ownerEmail,
@@ -187,14 +197,16 @@ func (s *Storage) ListEventsForPeriod(
 	defer rows.Close()
 
 	for rows.Next() {
-		var event storage.Event
+		var event model.Event
 		var notify, description sql.NullString
+		var notifyTime sql.NullTime
 		err := rows.Scan(&event.ID,
 			&event.Title,
 			&event.StartTime,
 			&event.EndTime,
 			&description,
 			&notify,
+			&notifyTime,
 			&event.OwnerEmail,
 		)
 		if err != nil {
@@ -207,8 +219,84 @@ func (s *Storage) ListEventsForPeriod(
 		if notify.Valid {
 			event.NotifyBefore = notify.String
 		}
+
+		if notifyTime.Valid {
+			event.NotifyTime = notifyTime.Time
+		}
 		result = append(result, event)
 	}
 
 	return result, rows.Err()
+}
+
+func (s *Storage) ListEventsToBeNotified(
+	ctx context.Context,
+	startTime,
+	endTime time.Time,
+) ([]model.Event, error) {
+	result := make([]model.Event, 0)
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email 
+		FROM events 
+		WHERE notify_time >= $1 AND notify_time <= $2`,
+		startTime,
+		endTime,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return result, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var event model.Event
+		var notify, description sql.NullString
+		var notifyTime sql.NullTime
+		err := rows.Scan(&event.ID,
+			&event.Title,
+			&event.StartTime,
+			&event.EndTime,
+			&description,
+			&notify,
+			&notifyTime,
+			&event.OwnerEmail,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if description.Valid {
+			event.Description = description.String
+		}
+
+		if notify.Valid {
+			event.NotifyBefore = notify.String
+		}
+
+		if notifyTime.Valid {
+			event.NotifyTime = notifyTime.Time
+		}
+		result = append(result, event)
+	}
+
+	return result, rows.Err()
+}
+
+func (s *Storage) DeleteEventsOlderThan(
+	ctx context.Context,
+	time time.Time,
+) error {
+	res, err := s.db.ExecContext(ctx, "delete from events where start_time <= $1", time)
+	if err != nil {
+		return err
+	}
+
+	_, err = res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -1,0 +1,23 @@
+[logger]
+level = "DEBUG"
+output = "stdout"
+
+[storage]
+mode = "postgres"
+# mode = "postgres"  # memory, postgres
+host = "localhost"
+port = 5432
+dbname = "calendar_db"
+user = "otus"
+password = "password"
+
+[queue]
+host = "localhost"
+port = 5672
+exchange = "calendar_notifications"
+user = "guest"
+password = "guest"
+
+[schedule]
+interval = "5s"
+retentionPeriod= "100h"

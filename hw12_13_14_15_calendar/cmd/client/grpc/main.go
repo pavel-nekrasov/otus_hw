@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	config := config.New(configFile)
+	config := config.NewCalendarConfig(configFile)
 	ctx := context.Background()
 	defer ctx.Done()
 

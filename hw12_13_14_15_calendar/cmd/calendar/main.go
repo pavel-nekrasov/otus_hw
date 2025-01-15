@@ -8,10 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/app"
+	app "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/app/calendar"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/config"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/server/grpc"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 )
 
 var configFile string
@@ -28,27 +29,28 @@ func main() {
 		return
 	}
 
-	config := config.New(configFile)
-	logg := logger.New(config.Logger.Level, config.Logger.Output)
-	defer logg.Close()
+	config := config.NewCalendarConfig(configFile)
+	log := logger.New(config.Logger.Level, config.Logger.Output)
+	defer log.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	storage := NewStorage(config.Storage)
+	storage := storage.NewStorage(config.Storage)
 	err := storage.Connect(ctx)
 	if err != nil {
-		logg.Error("failed to connect to storage: " + err.Error())
+		log.Error("failed to connect to storage: " + err.Error())
+		log.Close()
 		os.Exit(1) //nolint:gocritic
 	}
 	defer storage.Close(ctx)
 
-	calendar := app.New(logg, storage)
+	calendar := app.New(log, storage)
 	server := internalgrpc.NewServer(config.Endpoint.Host,
 		config.Endpoint.GRPCPort,
 		config.Endpoint.HTTPPort,
-		logg,
+		log,
 		calendar,
 	)
 
@@ -59,15 +61,16 @@ func main() {
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			log.Error("failed to stop calendar server: " + err.Error())
 		}
+		log.Info("Shutted down")
 	}()
 
-	logg.Info("calendar is running...")
-
+	log.Info("Calendar is running...")
 	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+		log.Error("failed to start calendar server: " + err.Error())
 		cancel()
 		os.Exit(1)
 	}
+	log.Info("Calendar is stopped")
 }

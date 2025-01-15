@@ -31,7 +31,7 @@ func TestConfigCases(t *testing.T) {
 			if _, err := os.Stat(tc.configFile); err != nil {
 				require.NoError(t, err)
 			}
-			c := New(tc.configFile)
+			c := NewCalendarConfig(tc.configFile)
 
 			require.Equal(t, tc.level, c.Logger.Level)
 			require.Equal(t, tc.output, c.Logger.Output)
