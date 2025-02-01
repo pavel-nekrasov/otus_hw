@@ -52,6 +52,43 @@ func (s *CalendarIntegrationSuite) cleanupDB() {
 	s.storage.Truncate(context.Background())
 }
 
+func (s *CalendarIntegrationSuite) TestNegativeCrud() {
+	addr := fmt.Sprintf("%v:%v", CalendarHost, s.calendarConfig.Endpoint.GRPCPort)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	s.Suite.Require().NoError(err)
+
+	client := pb.NewEventsClient(conn)
+	createReq := &pb.NewEventRequest{
+		Event: &pb.TransientEvent{
+			Title:       "",
+			Description: "some description",
+			StartTime:   time.Now().Add(24 * time.Hour).Unix(),
+			EndTime:     time.Now().Add(24 * time.Hour).Add(60 * time.Second).Unix(),
+			OwnerEmail:  "user1@example.com",
+			Notify:      "",
+		},
+	}
+	_, err = client.CreateEvent(context.Background(), createReq)
+	s.Suite.Require().Error(err, "should return error because Title is empty")
+
+	createReq = &pb.NewEventRequest{
+		Event: &pb.TransientEvent{
+			Title:       "Event Id",
+			Description: "some description",
+			StartTime:   time.Now().Add(24 * time.Hour).Unix(),
+			EndTime:     time.Now().Add(24 * time.Hour).Add(60 * time.Second).Unix(),
+			OwnerEmail:  "",
+			Notify:      "",
+		},
+	}
+	_, err = client.CreateEvent(context.Background(), createReq)
+	s.Suite.Require().Error(err, "should return error because Email is empty")
+
+	getRequest := &pb.EventIdRequest{Id: "Non existent Event"}
+	_, err = client.GetEvent(context.Background(), getRequest)
+	s.Suite.Require().Error(err)
+}
+
 func (s *CalendarIntegrationSuite) TestCrud() {
 	addr := fmt.Sprintf("%v:%v", CalendarHost, s.calendarConfig.Endpoint.GRPCPort)
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
