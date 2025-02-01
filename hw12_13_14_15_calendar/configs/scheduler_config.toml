@@ -5,14 +5,14 @@ output = "stdout"
 [storage]
 mode = "postgres"
 # mode = "postgres"  # memory, postgres
-host = "localhost"
+host = "cal_database"
 port = 5432
 dbname = "calendar_db"
 user = "otus"
 password = "password"
 
 [queue]
-host = "localhost"
+host = "cal_queue"
 port = 5672
 exchange = "calendar_notifications"
 user = "guest"

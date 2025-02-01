@@ -7,19 +7,21 @@ import (
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/common"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 )
 
 var errCannotBeEmpty = errors.New("cannot be empty")
 
 type App struct {
-	logger common.Logger
+	logger  common.Logger
+	storage storage.Storage
 }
 
-func New(logger common.Logger) *App {
-	return &App{logger: logger}
+func New(logger common.Logger, storage storage.Storage) *App {
+	return &App{logger: logger, storage: storage}
 }
 
-func (a *App) Notify(_ context.Context, dto contracts.Notification) error {
+func (a *App) Notify(ctx context.Context, dto contracts.Notification) error {
 	params := []any{
 		"Event Id", dto.ID,
 		"Time", dto.Time,
@@ -30,7 +32,9 @@ func (a *App) Notify(_ context.Context, dto contracts.Notification) error {
 		return err
 	}
 	a.logger.Info("Notification sent", params...)
-	return nil
+
+	err := a.storage.SetEventNotified(ctx, dto.ID)
+	return err
 }
 
 func (a *App) validateAttributes(dto contracts.Notification) error {

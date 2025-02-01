@@ -1,6 +1,4 @@
 BIN := "./bin/calendar"
-BIN_MIGRATE := "./bin/calendar_migrate"
-BIN_GRPC_CLIENT := "./bin/calendar_grpc_client"
 BIN_SENDER := "./bin/sender"
 BIN_SCHEDULER := "./bin/scheduler"
 DOCKER_IMG="calendar:develop"
@@ -31,15 +29,6 @@ build: build_calendar build_scheduler build_sender
 run: build
 	$(BIN) -config ./configs/calendar_config.toml
 
-build-img:
-	docker build \
-		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
-
-run-img: build-img
-	docker run $(DOCKER_IMG)
-
 version: build
 	$(BIN) version
 
@@ -52,17 +41,42 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-build-migrate:
-	go build -v -o $(BIN_MIGRATE) -ldflags "$(LDFLAGS)" ./cmd/migrate
-migrate: build-migrate
-	$(BIN_MIGRATE) -config ./configs/calendar_config.toml
 
 
-build-grpc-client:
-	go build -v -o $(BIN_GRPC_CLIENT) -ldflags "$(LDFLAGS)" ./cmd/client/grpc
+docker-build:
+	docker compose -f deployments/docker-compose.yml build
+docker-env-up:
+	docker compose -f deployments/docker-compose.yml up -d cal_database cal_queue
+docker-migrate:
+	docker compose -f deployments/docker-compose.yml up cal_migrate
+up:
+	make docker-build
+	make docker-env-up
+	make docker-migrate
+	docker compose -f deployments/docker-compose.yml up -d cal_server cal_scheduler cal_sender
+down:
+	docker compose -f deployments/docker-compose.yml down
 
-run-grpc-client: build-grpc-client
-	$(BIN_GRPC_CLIENT) -config ./configs/calendar_config.toml
+
+docker-build-test:
+	docker compose -f deployments/docker-compose.test.yml build
+docker-env-up-test:
+	docker compose -f deployments/docker-compose.test.yml up -d cal_database_test cal_queue_test
+docker-run-services-test:
+	docker compose -f deployments/docker-compose.test.yml up -d cal_server_test cal_scheduler_test cal_sender_test
+docker-stop-test:
+	docker compose -f deployments/docker-compose.test.yml down
+
+docker-migrate-test:
+	docker compose -f deployments/docker-compose.test.yml up cal_migrate_test
+
+integration-test:
+	make docker-build-test
+	make docker-env-up-test
+	make docker-migrate-test
+	make docker-run-services-test
+	docker compose -f deployments/docker-compose.test.yml up calendar_test
+	make docker-stop-test
 
 
 generate:

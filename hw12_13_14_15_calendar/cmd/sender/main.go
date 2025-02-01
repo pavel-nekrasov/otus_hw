@@ -14,6 +14,7 @@ import (
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/queue"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
 )
 
 var configFile string
@@ -38,13 +39,22 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	senderApp := app.New(log)
+	storage := storage.NewStorage(config.Storage)
+	if err := storage.Connect(ctx); err != nil {
+		log.Error("failed to connect to storage: " + err.Error())
+		log.Close()
+		os.Exit(1) //nolint:gocritic
+	}
+	defer storage.Close(ctx)
+
+	senderApp := app.New(log, storage)
 
 	queueConn := queue.NewConnection(config.Queue.QueueServerConf)
 	if err := queueConn.Connect(); err != nil {
 		log.Error(fmt.Sprintf("failed to connect to queue: %s", err.Error()))
+		storage.Close(ctx)
 		log.Close()
-		os.Exit(1) //nolint:gocritic
+		os.Exit(1)
 	}
 	defer queueConn.Close()
 
@@ -69,6 +79,7 @@ func main() {
 		log.Error(fmt.Sprintf("failed to connect to queue: %s", err.Error()))
 		consumer.Close()
 		queueConn.Close()
+		storage.Close(ctx)
 		log.Close()
 		os.Exit(1)
 	}

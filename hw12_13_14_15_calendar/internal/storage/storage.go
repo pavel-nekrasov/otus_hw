@@ -19,13 +19,14 @@ type (
 		DeleteEventsOlderThan(ctx context.Context, time time.Time) error
 		ListOwnerEventsForPeriod(ctx context.Context, ownerEmail string, startDate, endDate time.Time) ([]model.Event, error)
 		ListEventsToBeNotified(ctx context.Context, startTime, endTime time.Time) ([]model.Event, error)
+		SetEventNotified(ctx context.Context, eventID string) error
 	}
 
 	Control interface {
 		Storage
 		Connect(ctx context.Context) error
-		Migrate(ctx context.Context, migrate string) (err error)
 		Close(ctx context.Context) error
+		Truncate(ctx context.Context) error
 	}
 )
 

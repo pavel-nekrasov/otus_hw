@@ -1,0 +1,9 @@
+FROM gomicro/goose
+
+ADD ./migrations/*.sql /migrations/
+ADD migrate-entrypoint.sh /migrations/
+RUN chgrp -R 0 /migrations && \
+    chmod -R g=u /migrations/ && \
+    chmod g+x /migrations/migrate-entrypoint.sh
+
+ENTRYPOINT ["/migrations/migrate-entrypoint.sh"]

@@ -42,6 +42,10 @@ func (c *Consumer) Start(ctx context.Context) error {
 		return fmt.Errorf("channel: %w", err)
 	}
 
+	if err = c.channel.ExchangeDeclare(c.exchangeName, "direct", true, false, false, false, nil); err != nil {
+		return fmt.Errorf("failed to declare exchange: %w", err)
+	}
+
 	queue, err := c.channel.QueueDeclare(
 		c.queueName, // name of the queue
 		true,        // durable

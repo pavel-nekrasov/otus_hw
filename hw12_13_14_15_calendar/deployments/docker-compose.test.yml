@@ -1,0 +1,101 @@
+services:
+
+  cal_migrate_test:
+    env_file:
+      - ../.env.local
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_migrate
+    image: cal_migrate_test_img
+    depends_on:
+      cal_database_test:
+        condition: service_healthy
+      cal_queue_test:
+        condition: service_started
+
+  cal_server_test:
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_calendar
+    image: cal_server_test_img
+    env_file:
+      - ../.env.local
+    ports:
+      - 15000:15000
+      - 8080:8080
+    depends_on:
+      cal_database_test:
+        condition: service_started
+      cal_queue_test:
+        condition: service_started
+  
+  cal_scheduler_test:
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_scheduler
+    image: cal_scheduler_test_img
+    env_file:
+      - ../.env.local
+    depends_on:
+      cal_database_test:
+        condition: service_started
+      cal_queue_test:
+        condition: service_started
+  
+  cal_sender_test:
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_sender
+    image: cal_sender_test_img
+    depends_on:
+      cal_database_test:
+        condition: service_started
+      cal_queue_test:
+        condition: service_started
+
+  calendar_test:
+    container_name: calendar_test
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_test
+    image: calendar_test_img
+    depends_on:
+      cal_database_test:
+        condition: service_started
+      cal_queue_test:
+        condition: service_started
+
+  cal_database_test:
+    image: postgres:16.1-alpine3.19
+    hostname: cal_database
+    env_file:
+      - ../.env.local
+    volumes:
+      - cal_pgdata_test:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  cal_queue_test:
+    image: rabbitmq:3-management-alpine
+    hostname: cal_queue
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - cal_rabbitdata_test:/var/lib/rabbitmq
+    restart: always
+
+networks:
+  default:
+    name: cal-network-test
+
+volumes:
+  cal_pgdata_test:
+  cal_rabbitdata_test:

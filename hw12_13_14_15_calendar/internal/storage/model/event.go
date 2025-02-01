@@ -11,4 +11,5 @@ type Event struct {
 	NotifyBefore string
 	NotifyTime   time.Time
 	OwnerEmail   string
+	Notified     bool
 }

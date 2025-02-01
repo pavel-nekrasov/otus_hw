@@ -10,7 +10,6 @@ import (
 	_ "github.com/jackc/pgx/stdlib" // need import pgx
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage/model"
-	goose "github.com/pressly/goose/v3"
 )
 
 type Storage struct {
@@ -38,17 +37,8 @@ func (s *Storage) Close(_ context.Context) error {
 	return s.db.Close()
 }
 
-func (s *Storage) Migrate(_ context.Context, migrate string) (err error) {
-	//	goose.SetBaseFS(embedMigrations)
-
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("cannot set dialect: %w", err)
-	}
-
-	if err := goose.Up(s.db, migrate); err != nil {
-		return fmt.Errorf("cannot do up migration: %w", err)
-	}
-
+func (s *Storage) Truncate(ctx context.Context) error {
+	s.db.ExecContext(ctx, "TRUNCATE events CASCADE")
 	return nil
 }
 
@@ -111,9 +101,32 @@ func (s *Storage) UpdateEvent(ctx context.Context, event model.Event) error {
 	return nil
 }
 
+func (s *Storage) SetEventNotified(ctx context.Context, eventID string) error {
+	res, err := s.db.ExecContext(ctx, `UPDATE events
+		SET notified_flag = $2 
+		WHERE id = $1`,
+		eventID,
+		true,
+	)
+	if err != nil {
+		return err
+	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if cnt == 0 {
+		return customerrors.NotFound{Message: fmt.Sprintf("Event with id = \"%v\" not found", eventID)}
+	}
+
+	return nil
+}
+
 func (s *Storage) GetEvent(ctx context.Context, eventID string) (model.Event, error) {
 	row := s.db.QueryRowContext(ctx,
-		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email 
+		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email, notified_flag 
 		FROM events WHERE id = $1`,
 		eventID,
 	)
@@ -134,6 +147,7 @@ func (s *Storage) GetEvent(ctx context.Context, eventID string) (model.Event, er
 		&notify,
 		&notifyTime,
 		&event.OwnerEmail,
+		&event.Notified,
 	)
 	if err != nil {
 		return model.Event{}, err
@@ -180,7 +194,7 @@ func (s *Storage) ListOwnerEventsForPeriod(
 ) ([]model.Event, error) {
 	result := make([]model.Event, 0)
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email 
+		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email, notified_flag 
 		FROM events 
 		WHERE owner_email = $1 AND start_time >= $2 AND end_time <= $3`,
 		ownerEmail,
@@ -208,6 +222,7 @@ func (s *Storage) ListOwnerEventsForPeriod(
 			&notify,
 			&notifyTime,
 			&event.OwnerEmail,
+			&event.Notified,
 		)
 		if err != nil {
 			return nil, err
@@ -238,7 +253,7 @@ func (s *Storage) ListEventsToBeNotified(
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT id, title, start_time, end_time, description, notify_before, notify_time, owner_email 
 		FROM events 
-		WHERE notify_time >= $1 AND notify_time <= $2`,
+		WHERE notify_time >= $1 AND notify_time <= $2 AND notified_flag = false `,
 		startTime,
 		endTime,
 	)
