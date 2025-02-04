@@ -10,7 +10,7 @@ grpcPort = 15000
 [storage]
 mode = "postgres"
 # mode = "postgres"  # memory, postgres
-host = "localhost"
+host = "cal_database"
 port = 5432
 dbname = "calendar_db"
 user = "otus"

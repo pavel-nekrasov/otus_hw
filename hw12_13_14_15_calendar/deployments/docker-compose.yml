@@ -1,0 +1,89 @@
+services:
+
+  cal_migrate:
+    env_file:
+      - ../.env.local
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_migrate
+    image: cal_migrate_img
+    depends_on:
+      cal_database:
+        condition: service_healthy
+      cal_queue:
+        condition: service_started
+
+  cal_server:
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_calendar
+    image: cal_server_img
+    env_file:
+      - ../.env.local
+    ports:
+      - 15000:15000
+      - 8888:8080
+    depends_on:
+      cal_database:
+        condition: service_started
+      cal_queue:
+        condition: service_started
+  
+  cal_scheduler:
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_scheduler
+    image: cal_scheduler_img
+    env_file:
+      - ../.env.local
+    depends_on:
+      cal_database:
+        condition: service_started
+      cal_queue:
+        condition: service_started
+  
+  cal_sender:
+    build:
+      context: ../
+      dockerfile: ./build/Dockerfile_sender
+    image: cal_sender_img
+    depends_on:
+      cal_database:
+        condition: service_started
+      cal_queue:
+        condition: service_started
+
+  cal_database:
+    image: postgres:16.1-alpine3.19
+    hostname: cal_database
+    env_file:
+      - ../.env.local
+    volumes:
+      - cal_pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  cal_queue:
+    image: rabbitmq:3-management-alpine
+    hostname: cal_queue
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - cal_rabbitdata:/var/lib/rabbitmq
+    restart: always
+
+networks:
+  default:
+    name: cal-network
+
+volumes:
+  cal_pgdata:
+  cal_rabbitdata:

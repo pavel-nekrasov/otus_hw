@@ -7,11 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/config"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/contracts"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/customerrors"
 	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/logger"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage"
+	"github.com/pavel-nekrasov/otus_hw/hw12_13_14_15_calendar/internal/storage/model"
 	"github.com/stretchr/testify/require"
 )
+
+const StorageMode = "memory"
 
 func TestAppNotifySuccess(t *testing.T) {
 	tests := []contracts.Notification{
@@ -31,11 +36,23 @@ func TestAppNotifySuccess(t *testing.T) {
 
 	logger := logger.New("INFO", "stdout")
 	ctx := context.Background()
-	app := New(logger)
+	storageConfig := config.StorageConf{Mode: StorageMode}
+	storage := storage.NewStorage(storageConfig)
+	app := New(logger, storage)
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			tt := tt
 			t.Parallel()
+
+			storage.AddEvent(
+				ctx,
+				model.Event{
+					ID:         tt.ID,
+					Title:      tt.Title,
+					StartTime:  time.Unix(tt.Time, 0),
+					EndTime:    time.Unix(tt.Time, 0),
+					OwnerEmail: tt.OwnerEmail,
+				})
 
 			err := app.Notify(ctx, tt)
 			require.NoError(t, err)
@@ -79,7 +96,9 @@ func TestAppNotifyError(t *testing.T) {
 
 	logger := logger.New("INFO", "stdout")
 	ctx := context.Background()
-	app := New(logger)
+	storageConfig := config.StorageConf{Mode: StorageMode}
+	storage := storage.NewStorage(storageConfig)
+	app := New(logger, storage)
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			tt := tt

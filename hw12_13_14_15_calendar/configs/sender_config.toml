@@ -3,9 +3,18 @@ level = "DEBUG"
 output = "stdout"
 
 [queue]
-host = "localhost"
+host = "cal_queue"
 port = 5672
 exchange = "calendar_notifications"
 queue = "notification_sender"
 user = "guest"
 password = "guest"
+
+[storage]
+mode = "postgres"
+# mode = "postgres"  # memory, postgres
+host = "cal_database"
+port = 5432
+dbname = "calendar_db"
+user = "otus"
+password = "password"

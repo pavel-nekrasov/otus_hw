@@ -25,8 +25,9 @@ type SchedulerConfig struct {
 }
 
 type SenderConfig struct {
-	Logger LoggerConf
-	Queue  QueueConsumerConf
+	Logger  LoggerConf
+	Queue   QueueConsumerConf
+	Storage StorageConf
 }
 
 type LoggerConf struct {
